@@ -113,6 +113,17 @@ t1 %>%
   adorn_title("combined") %>%
   knitr::kable()
 
+data %>%
+  count(Churn, Dependents) %>%
+  mutate(porc = n / sum(n)) %>%
+  ggplot(aes(Dependents, n, fill = Churn)) +
+  geom_bar(stat = 'identity') +
+  geom_text(aes(label = scales::percent(porc), y = n-0.5)) +
+  labs(title = "Churn vs Dependents",
+       x = "Dependents",
+       y = "Count")  
+
+
 #Eda Bivariado entre churn y OnlineSecurity
 
 
@@ -141,5 +152,7 @@ t3 %>%
   adorn_ns() %>%
   adorn_title("combined") %>%
   knitr::kable()  
+
+
 
 ### Room 10
