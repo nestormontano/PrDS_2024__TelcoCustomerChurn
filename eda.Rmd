@@ -1,0 +1,105 @@
+---
+title: "EDA"
+output: html_notebook
+---
+
+## Preliminares
+
+```{r}
+library(tidyverse)
+library(magrittr)
+library(skimr)
+```
+
+### Importacion
+
+```{r}
+data <- read_csv('Data/WA_Fn-UseC_-Telco-Customer-Churn.csv')
+```
+#### Verificar y corregir columnas
+
+```{r}
+data %>% glimpse
+```
+
+```{r}
+data %>% 
+  mutate(
+    SeniorCitizen= factor(SeniorCitizen, levels= c(0, 1), 
+                             labels= c('no', 'si') )
+  ) ->
+  data
+```
+
+
+
+# EDA
+
+## EDA Univariado
+
+```{r}
+skim( data)
+```
+
+
+
+
+```{r}
+data %>% 
+  reframe( 
+    tibble(
+      Descrip= c('P_0', 'P_02', 'P_25', 'P_50' , 'P_75', 'P_98', 'P_100') ,
+      Valor= quantile( TotalCharges, c(0, 0.2, 0.25, 0.50 ,0.75, 0.98, 1), na.rm= T)
+    )
+    )
+```
+
+
+## EDA Multivariado
+
+### Room 2
+
+#### Genero vs Churn
+
+**Tabla**
+```{r}
+
+```
+
+**Grafico**
+```{r}
+
+```
+
+**Interpretacion**
+
+
+
+#### PhoneService vs Churn
+
+```{r}
+
+```
+
+**Interpretacion**
+
+
+
+### Room 4
+
+
+
+
+
+
+### Room 6
+
+
+
+
+### Room 8
+
+
+
+
+### Room 10
