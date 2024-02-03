@@ -1,15 +1,12 @@
 ---
 title: "EDA"
-<<<<<<< HEAD
 output: html_notebook
 editor_options: 
   markdown: 
     wrap: 72
-=======
 output:
   html_document:
     df_print: paged
->>>>>>> 16a0e5d045a195ca5c3f5f437c1fe49e9633df67
 ---
 
 ## Preliminares
