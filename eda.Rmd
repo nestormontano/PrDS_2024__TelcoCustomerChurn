@@ -1,6 +1,8 @@
 ---
 title: "EDA"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 ## Preliminares
@@ -38,7 +40,7 @@ data %>%
 ## EDA Univariado
 
 ```{r}
-skim( data)
+skim(data)
 ```
 
 
@@ -55,7 +57,7 @@ data %>%
 ```
 
 
-## EDA Multivariado
+## EDA Bivariado
 
 ### Room 2
 
@@ -87,13 +89,134 @@ data %>%
 
 ### Room 4
 
+#### SeniorCitizen vs Churn
+
+**Tabla**
+
+```{r}
+data %>%
+  group_by(SeniorCitizen, Churn) %>%
+  summarise(
+    N = n(),
+    Porc = round(100*N/nrow(data),2)
+  ) %>%
+  mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Sc
+
+```
+
+```{r echo=T}
+tigerstats::rowPerc(xtabs(~SeniorCitizen+Churn, data=data) )
+```
+
+**Gráfico**
+
+```{r}
+ggplot(valores_Sc, aes(x = SeniorCitizen, y = N, fill = Churn)) +
+  geom_col(stat = "identity", position = "dodge") +
+  geom_text(aes(label = N), vjust = 1.5,
+            position = position_dodge(.9))
+```
+
+**Interpretación**
+
+De los adultos mayores el 41% abandonó el servicio, mientras que de los no adultos mayores apenas un 24% abandonó el servicio. Aparentemente, un adulto mayor tiene mayor probabilidad de abandonar el servicio. 
+
+#### MultipleLines vs Churn
+
+**Tabla**
+
+```{r}
+data %>%
+  group_by(MultipleLines, Churn) %>%
+  summarise(
+    N = n(),
+    Porc = round(100*N/nrow(data),2)
+  ) %>%
+  mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Ml
+
+```
+
+```{r echo=T}
+tigerstats::rowPerc(xtabs(~MultipleLines+Churn, data=data) )
+```
+
+**Gráfico**
+
+```{r}
+ggplot(valores_Ml, aes(x = MultipleLines, y = N, fill = Churn)) +
+  geom_col(stat = "identity", position = "dodge") +
+  geom_text(aes(label = N), vjust = 1.5,
+            position = position_dodge(.9))
+```
 
 
+**Interpretación**
+
+Entre las categorías de MultipleLines no hay mayor diferencia, entre los que abandonan o no el servicio. Los porcentajes son muy parecidos. 
 
 
+#### TechSupport vs Churn
+
+```{r}
+data %>%
+  group_by(TechSupport, Churn) %>%
+  summarise(
+    N = n(),
+    Porc = round(100*N/nrow(data),2)
+  ) %>%
+  mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Ts
+
+```
+
+```{r echo=T}
+tigerstats::rowPerc(xtabs(~TechSupport+Churn, data=data) )
+```
+
+**Gráfico**
+
+```{r}
+ggplot(valores_Ts, aes(x = TechSupport, y = N, fill = Churn)) +
+  geom_col(stat = "identity", position = "dodge") +
+  geom_text(aes(label = N), vjust = 1.5,
+            position = position_dodge(.9))
+```
+
+**Interpretación**
+
+Los que no cuentan con soporte técnico, el 41.68% abandona el servicio. Por otro lado, los que si cuentan con soporte apenas un 15.17% abandona el servicio y los que no tienen internet contratado solo un 7.40% abandona el servicio.
+
+
+#### PaymentMethod vs Churn
+
+```{r}
+data %>%
+  group_by(PaymentMethod, Churn) %>%
+  summarise(
+    N = n(),
+    Porc = round(100*N/nrow(data),2)
+  ) %>%
+  mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Pm
+
+```
+
+```{r echo=T}
+tigerstats::rowPerc(xtabs(~PaymentMethod+Churn, data=data) )
+```
+
+**Gráfico**
+
+```{r}
+ggplot(valores_Pm, aes(x = PaymentMethod, y = N, fill = Churn)) +
+  geom_col(stat = "identity", position = "dodge") +
+  geom_text(aes(label = N), vjust = 1.5,
+            position = position_dodge(.9))
+```
+
+**Interpretación**
+ 
+A excepción de los que pagan con cheque electrónico los porcentajes de abandono son muy parecidos. En el caso de los que pagan con cheque electrónico un 45.29% abandona el servicio.
 
 ### Room 6
-
 
 
 
@@ -103,3 +226,30 @@ data %>%
 
 
 ### Room 10
+
+
+## EDA Multivariado
+
+
+### Room 4
+
+####  MonthlyCharges vs PaymentMethod vs Churn
+
+**Gráfico 1**
+
+```{r}
+ggplot(data, aes(x = PaymentMethod, y = MonthlyCharges, fill = Churn)) +
+  geom_boxplot()
+```
+**Interpretación**
+
+
+**Gráfico 2**
+
+```{r}
+ggplot(data, aes(x = Churn, y = MonthlyCharges, fill = PaymentMethod)) +
+  geom_boxplot()
+```
+**Interpretación**
+
+Los montos de pago de aquellos que abandonan el servicio son superiores a aquellos que permanecen con excepción de los que pagan por cheque electrónico. 
