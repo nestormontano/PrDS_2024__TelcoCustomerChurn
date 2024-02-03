@@ -230,7 +230,7 @@ A excepción de los que pagan con cheque electrónico los porcentajes de abandon
 
 
 
->>>>>>> 16a0e5d045a195ca5c3f5f437c1fe49e9633df67
+
 ### Room 8
 
 #Eda Bivariado entre churn y Dependents
@@ -299,8 +299,8 @@ data %>%
 
 
 
-### Room 10
-=======
+### Room 9
+
 ### Room 10
 
 
