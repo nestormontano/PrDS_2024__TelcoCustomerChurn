@@ -1,12 +1,8 @@
 ---
 title: "EDA"
-output: html_notebook
+output: github_document
 editor_options: 
-  markdown: 
-    wrap: 72
-output:
-  html_document:
-    df_print: paged
+  chunk_output_type: console
 ---
 
 ## Preliminares
@@ -237,7 +233,7 @@ A excepción de los que pagan con cheque electrónico los porcentajes de abandon
 
 ### Room 8
 
-#Eda Bivariado entre churn y Dependents
+#### Eda Bivariado entre churn y Dependents
 
 
 ```{r}
@@ -306,7 +302,7 @@ data %>% count(Churn, StreamingMovies) %>%
 
 El 13,32% de los indviduos analizados y que abandonaron el servicio no contaban con servicio de Streaming Movies. Sin embargo, tanto para el grupo que abandonaron o mantuvieron el servicio no se evidencia una importancia relevante para su salidad del plan.  
 
-#Eda Bivariado entre churn y Total Charges
+#### Eda Bivariado entre churn y Total Charges
 
 ```{r}
 
@@ -382,7 +378,7 @@ ggplot(data, aes(x = PaymentMethod, y = MonthlyCharges, fill = Churn)) +
 ggplot(data, aes(x = Churn, y = MonthlyCharges, fill = PaymentMethod)) +
   geom_boxplot()
 ```
+
 **Interpretación**
 
 Los montos de pago de aquellos que abandonan el servicio son superiores a aquellos que permanecen con excepción de los que pagan por cheque electrónico. 
->>>>>>> 16a0e5d045a195ca5c3f5f437c1fe49e9633df67
