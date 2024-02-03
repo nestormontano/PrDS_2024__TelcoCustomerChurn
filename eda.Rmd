@@ -111,19 +111,20 @@ data %>%
     Porc = round(100*N/nrow(data),2)
   ) %>%
   mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Sc
-
+valores_Sc
 ```
 
 ```{r echo=T}
-tigerstats::rowPerc(xtabs(~SeniorCitizen+Churn, data=data) )
+# Comentado por conflictos con paquete
+# tigerstats::rowPerc(xtabs(~SeniorCitizen+Churn, data=data) )
 ```
 
 **Gráfico**
 
 ```{r}
-ggplot(valores_Sc, aes(x = SeniorCitizen, y = N, fill = Churn)) +
+ggplot(valores_Sc, aes(x = SeniorCitizen, y = Porc_grupo, fill = Churn)) +
   geom_col(stat = "identity", position = "dodge") +
-  geom_text(aes(label = N), vjust = 1.5,
+  geom_text(aes(label = Porc_grupo), vjust = 1.5,
             position = position_dodge(.9))
 ```
 
@@ -143,11 +144,12 @@ data %>%
     Porc = round(100*N/nrow(data),2)
   ) %>%
   mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Ml
-
+valores_Ml
 ```
 
 ```{r echo=T}
-tigerstats::rowPerc(xtabs(~MultipleLines+Churn, data=data) )
+# Comentado por conflictos con paquete
+# tigerstats::rowPerc(xtabs(~MultipleLines+Churn, data=data) )
 ```
 
 **Gráfico**
@@ -175,11 +177,12 @@ data %>%
     Porc = round(100*N/nrow(data),2)
   ) %>%
   mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Ts
-
+valores_Ts
 ```
 
 ```{r echo=T}
-tigerstats::rowPerc(xtabs(~TechSupport+Churn, data=data) )
+# Comentado por conflictos con paquete
+# tigerstats::rowPerc(xtabs(~TechSupport+Churn, data=data) )
 ```
 
 **Gráfico**
@@ -206,11 +209,12 @@ data %>%
     Porc = round(100*N/nrow(data),2)
   ) %>%
   mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Pm
-
+valores_Pm
 ```
 
 ```{r echo=T}
-tigerstats::rowPerc(xtabs(~PaymentMethod+Churn, data=data) )
+# Comentado por conflictos con paquete
+# tigerstats::rowPerc(xtabs(~PaymentMethod+Churn, data=data) )
 ```
 
 **Gráfico**
@@ -226,7 +230,10 @@ ggplot(valores_Pm, aes(x = PaymentMethod, y = N, fill = Churn)) +
  
 A excepción de los que pagan con cheque electrónico los porcentajes de abandono son muy parecidos. En el caso de los que pagan con cheque electrónico un 45.29% abandona el servicio.
 
+
+
 ### Room 6
+
 
 
 
@@ -255,7 +262,7 @@ data %>% count(Churn, Dependents) %>%
 
 De la muestra analizada alrededor del 27% corresponde a individuos que dejaron sus planes en el último mes. Además se conoce que el 4,6% de estos individuos contaban con personas dependientes.  
 
-#Eda Bivariado entre churn y OnlineSecurity
+#### Eda Bivariado entre churn y OnlineSecurity
 
 
 ```{r}
@@ -280,7 +287,7 @@ data %>% count(Churn, OnlineSecurity) %>%
 El 20,74% de los indviduos analizados y que abandonaron el servicio no contaban con seguridad en línea. Por otro lado aquellos que no salieron del plan reflejaron una participación similar con relación al servicio de seguridad en línea. 
 
 
-#Eda Bivariado entre Churn y StreamingMovies  
+#### Eda Bivariado entre Churn y StreamingMovies  
 
 ```{r}
 
@@ -329,7 +336,7 @@ data %>%
 En promedio el gasto total en el servicio de telecomunicaciones para los individuos que salieron del plan es inferior por usuario en alrededor de USD 1000. Para los usuarios que salieron del servicio se evidencia datos atípicos elevados que alcanzan los valores máximos de los usarios que no salieron del servicio. Cabe señalar que, para los usuarios que no abandoron el servicio su extipendio total del plan se concentra entre el rango intercuartílico. Adicionalmente, se observa que la variable gasto total cuenta con 11 valores perdidos. 
 
 
-#Eda Multivariado entre MonthlyCharges vs Dependents vs Churn
+#### Eda Multivariado entre MonthlyCharges vs Dependents vs Churn
 
 ```{r}
 data %>%  group_by(Churn,Dependents) %>% 
