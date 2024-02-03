@@ -242,7 +242,7 @@ adorn_pct_formatting(rounding = "half up", digits = 0) %>% adorn_ns() %>%
 
 data %>% count(Churn, Dependents) %>%
   mutate(porc = n / sum(n)) %>% 
-  ggplot(aes(fill=Churn, y=porc, x=Dependents)) + 
+  ggplot(aes(fill=Dependents, y=porc, x=Churn)) + 
     geom_col(position="stack") +
     geom_text(aes(label=scales::percent(porc)),position = position_stack(vjust=0.5))+
   scale_y_continuous(labels = scales::percent_format()) 
@@ -250,8 +250,7 @@ data %>% count(Churn, Dependents) %>%
 
 ```
 
-
-
+De la muestra analizada alrededor del 27% corresponde a individuos que dejaron sus planes en el último mes. Además se conoce que el 4,6% de estos individuos contaban con personas dependientes.  
 
 #Eda Bivariado entre churn y OnlineSecurity
 
@@ -267,13 +266,16 @@ adorn_pct_formatting(rounding = "half up", digits = 0) %>% adorn_ns()%>% adorn_t
 
 data %>% count(Churn, OnlineSecurity) %>%
   mutate(porc = n / sum(n)) %>% 
-  ggplot(aes(fill=Churn, y=porc, x=OnlineSecurity)) + 
+  ggplot(aes(fill=OnlineSecurity, y=porc, x=Churn)) + 
     geom_col(position="stack") +
     geom_text(aes(label=scales::percent(porc)),position = position_stack(vjust=0.5))+
   scale_y_continuous(labels = scales::percent_format()) 
 
 
 ```
+
+El 20,74% de los indviduos analizados y que abandonaron el servicio no contaban con seguridad en línea. Por otro lado aquellos que no salieron del plan reflejaron una participación similar con relación al servicio de seguridad en línea. 
+
 
 #Eda Bivariado entre Churn y StreamingMovies  
 
@@ -287,7 +289,7 @@ adorn_pct_formatting(rounding = "half up", digits = 0) %>% adorn_ns()%>% adorn_t
 
 data %>% count(Churn, StreamingMovies) %>%
   mutate(porc = n / sum(n)) %>% 
-  ggplot(aes(fill=Churn, y=porc, x=StreamingMovies)) + 
+  ggplot(aes(fill=StreamingMovies, y=porc, x=Churn)) + 
     geom_col(position="stack") +
     geom_text(aes(label=scales::percent(porc)),position = position_stack(vjust=0.5))+
   scale_y_continuous(labels = scales::percent_format()) 
@@ -295,7 +297,7 @@ data %>% count(Churn, StreamingMovies) %>%
 
 ```
 
-
+El 13,32% de los indviduos analizados y que abandonaron el servicio no contaban con servicio de Streaming Movies. Sin embargo, tanto para el grupo que abandonaron o mantuvieron el servicio no se evidencia una importancia relevante para su salidad del plan.  
 
 #Eda Bivariado entre churn y Total Charges
 
@@ -311,12 +313,18 @@ t4
 data %>%
   ggplot(aes(x = Churn, y = TotalCharges, fill = Churn)) +
   geom_boxplot() +
-  stat_summary(fun = mean, geom = "point", shape = 3, size = 3, color = "white", position = position_dodge(width = 0.75)) +
+  stat_summary(fun = mean, geom = "point", shape = 3, size = 3,
+               color = "white", position = position_dodge(width = 0.75)) +
   labs(title = "Churn vs Total Charges",
        x = "Churn",
-       y = "Total Charges")
+       y = "Total Charges") +
+        theme_minimal()
 
 ```
+
+
+En promedio el gasto total en el servicio de telecomunicaciones para los individuos que salieron del plan es inferior por usuario en alrededor de USD 1000. Para los usuarios que salieron del servicio se evidencia datos atípicos elevados que alcanzan los valores máximos de los usarios que no salieron del servicio. Cabe señalar que, para los usuarios que no abandoron el servicio su extipendio total del plan se concentra entre el rango intercuartílico. Adicionalmente, se observa que la variable gasto total cuenta con 11 valores perdidos. 
+
 
 #Eda Multivariado entre MonthlyCharges vs Dependents vs Churn
 
@@ -337,7 +345,7 @@ data %>%
 
 ```
 
-
+La distribución del gasto mensual de aquellos individuos que no salieron del plan se concentra dentro del cuartil 1 y cuartil 3, además entre el máximo y mínimo de los que dejaron el servicio respecto de los que se quedaron no se verifica mayor diferencia. Es importante destacar que, tanto el promedio como la mediana del pago mensual es superior en los individuos que salieron del plan de los que se quedaron, no obstante no se verifica mayor diferencia respecto de contar o no con dependientes en los usuarios que abandonaron el plan. 
 
 
 ### Room 9
