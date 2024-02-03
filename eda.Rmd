@@ -129,21 +129,24 @@ data %>% count(Churn, OnlineSecurity) %>% mutate(porc = n / sum(n)) %>%
 
 ```
 
-#Eda Bivariado entre churn y StreamingMovies
+#Eda Bivariado entre churn y Total Charges
 
 ```{r}
 
-data %>% tabyl(Churn,StreamingMovies) -> t3
+data %>%  group_by(Churn) %>% 
+  summarise(n = n(),
+            promedio = mean(TotalCharges,na.rm = T),
+            n_missing = sum(is.na(TotalCharges)),
+            desv = sd(TotalCharges, na.rm =T)) -> t4
+t4
 
-t3 %>% adorn_totals(c("row", "col")) %>% adorn_percentages("all") %>%
-adorn_pct_formatting(rounding = "half up", digits = 0) %>% adorn_ns() %>% 
-  adorn_title("combined") %>% knitr::kable()
-
-data %>% count(Churn, StreamingMovies) %>% mutate(porc = n / sum(n)) %>%
-  ggplot(aes(StreamingMovies, n, fill = Churn)) + geom_bar(stat =
-'identity') + geom_text(aes(label = scales::percent(porc), y = n, vjust
-= 1)) + labs(title = "Churn vs StreamingMovies", x = "StreamingMovies", y
-= "Count")
+data %>%
+  ggplot(aes(x = Churn, y = TotalCharges, fill = Churn)) +
+  geom_boxplot() +
+  stat_summary(fun = mean, geom = "point", shape = 3, size = 3, color = "white", position = position_dodge(width = 0.75)) +
+  labs(title = "Churn vs Total Charges",
+       x = "Churn",
+       y = "Total Charges")
 
 ```
 
