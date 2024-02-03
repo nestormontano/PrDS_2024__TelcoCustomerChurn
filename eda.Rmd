@@ -1,5 +1,9 @@
 ---
 title: "EDA"
+output: html_notebook
+editor_options: 
+  markdown: 
+    wrap: 72
 output:
   html_document:
     df_print: paged
@@ -11,6 +15,7 @@ output:
 library(tidyverse)
 library(magrittr)
 library(skimr)
+library(janitor)
 ```
 
 ### Importacion
@@ -18,6 +23,7 @@ library(skimr)
 ```{r}
 data <- read_csv('Data/WA_Fn-UseC_-Telco-Customer-Churn.csv')
 ```
+
 #### Verificar y corregir columnas
 
 ```{r}
@@ -33,8 +39,6 @@ data %>%
   data
 ```
 
-
-
 # EDA
 
 ## EDA Univariado
@@ -46,8 +50,8 @@ skim(data)
 ```
 
 
-
 ### Posibles outliers
+
 ```{r}
 data %>% 
   reframe( 
@@ -66,6 +70,8 @@ data %>%
   count()
 ```
 
+## EDA Multivariado
+=======
 
 ## EDA Bivariado
 
@@ -74,18 +80,18 @@ data %>%
 #### Genero vs Churn
 
 **Tabla**
+
 ```{r}
 
 ```
 
 **Grafico**
+
 ```{r}
 
 ```
 
 **Interpretacion**
-
-
 
 #### PhoneService vs Churn
 
@@ -94,8 +100,6 @@ data %>%
 ```
 
 **Interpretacion**
-
-
 
 ### Room 4
 
@@ -230,10 +234,128 @@ A excepción de los que pagan con cheque electrónico los porcentajes de abandon
 
 
 
+
 ### Room 8
 
+#Eda Bivariado entre churn y Dependents
 
 
+```{r}
+data %>% tabyl(Churn, Dependents ) -> t1
+
+t1 %>% adorn_totals(c("row", "col")) %>% adorn_percentages("all") %>%
+adorn_pct_formatting(rounding = "half up", digits = 0) %>% adorn_ns() %>%
+  adorn_title("combined") %>% knitr::kable()
+
+data %>% count(Churn, Dependents) %>%
+  mutate(porc = n / sum(n)) %>% 
+  ggplot(aes(fill=Dependents, y=porc, x=Churn)) + 
+    geom_col(position="stack") +
+    geom_text(aes(label=scales::percent(porc)),position = position_stack(vjust=0.5))+
+  scale_y_continuous(labels = scales::percent_format()) 
+
+
+```
+
+De la muestra analizada alrededor del 27% corresponde a individuos que dejaron sus planes en el último mes. Además se conoce que el 4,6% de estos individuos contaban con personas dependientes.  
+
+#Eda Bivariado entre churn y OnlineSecurity
+
+
+```{r}
+
+
+data %>% tabyl(Churn,OnlineSecurity ) -> t2
+
+t2 %>% adorn_totals(c("row", "col")) %>% adorn_percentages("all") %>%
+adorn_pct_formatting(rounding = "half up", digits = 0) %>% adorn_ns()%>% adorn_title("combined")%>% knitr::kable()
+
+
+data %>% count(Churn, OnlineSecurity) %>%
+  mutate(porc = n / sum(n)) %>% 
+  ggplot(aes(fill=OnlineSecurity, y=porc, x=Churn)) + 
+    geom_col(position="stack") +
+    geom_text(aes(label=scales::percent(porc)),position = position_stack(vjust=0.5))+
+  scale_y_continuous(labels = scales::percent_format()) 
+
+
+```
+
+El 20,74% de los indviduos analizados y que abandonaron el servicio no contaban con seguridad en línea. Por otro lado aquellos que no salieron del plan reflejaron una participación similar con relación al servicio de seguridad en línea. 
+
+
+#Eda Bivariado entre Churn y StreamingMovies  
+
+```{r}
+
+data %>% tabyl(Churn,StreamingMovies) -> t3
+
+t3 %>% adorn_totals(c("row", "col")) %>% adorn_percentages("all") %>%
+adorn_pct_formatting(rounding = "half up", digits = 0) %>% adorn_ns()%>% adorn_title("combined")%>% knitr::kable()
+
+
+data %>% count(Churn, StreamingMovies) %>%
+  mutate(porc = n / sum(n)) %>% 
+  ggplot(aes(fill=StreamingMovies, y=porc, x=Churn)) + 
+    geom_col(position="stack") +
+    geom_text(aes(label=scales::percent(porc)),position = position_stack(vjust=0.5))+
+  scale_y_continuous(labels = scales::percent_format()) 
+
+
+```
+
+El 13,32% de los indviduos analizados y que abandonaron el servicio no contaban con servicio de Streaming Movies. Sin embargo, tanto para el grupo que abandonaron o mantuvieron el servicio no se evidencia una importancia relevante para su salidad del plan.  
+
+#Eda Bivariado entre churn y Total Charges
+
+```{r}
+
+data %>%  group_by(Churn) %>% 
+  summarise(n = n(),
+            promedio = mean(TotalCharges,na.rm = T),
+            n_missing = sum(is.na(TotalCharges)),
+            desv = sd(TotalCharges, na.rm =T)) -> t4
+t4
+
+data %>%
+  ggplot(aes(x = Churn, y = TotalCharges, fill = Churn)) +
+  geom_boxplot() +
+  stat_summary(fun = mean, geom = "point", shape = 3, size = 3,
+               color = "white", position = position_dodge(width = 0.75)) +
+  labs(title = "Churn vs Total Charges",
+       x = "Churn",
+       y = "Total Charges") +
+        theme_minimal()
+
+```
+
+
+En promedio el gasto total en el servicio de telecomunicaciones para los individuos que salieron del plan es inferior por usuario en alrededor de USD 1000. Para los usuarios que salieron del servicio se evidencia datos atípicos elevados que alcanzan los valores máximos de los usarios que no salieron del servicio. Cabe señalar que, para los usuarios que no abandoron el servicio su extipendio total del plan se concentra entre el rango intercuartílico. Adicionalmente, se observa que la variable gasto total cuenta con 11 valores perdidos. 
+
+
+#Eda Multivariado entre MonthlyCharges vs Dependents vs Churn
+
+```{r}
+data %>%  group_by(Churn,Dependents) %>% 
+    summarise(n = n(),
+            promedio = mean(MonthlyCharges,na.rm = T),
+            n_missing = sum(is.na(MonthlyCharges)),
+            desv = sd(MonthlyCharges, na.rm =T)) -> t5
+t5
+data %>%
+  ggplot(aes(x = Churn, y = MonthlyCharges, fill = Dependents)) +
+  geom_boxplot() +
+  stat_summary(fun = mean, geom = "point", shape = 3, size = 3, color = "white", position = position_dodge(width = 0.75)) +
+  labs(title = "Monthtly Charges for Dependents vs Churn",
+       x = "Churn",
+       y = "Monthly Charges")
+
+```
+
+La distribución del gasto mensual de aquellos individuos que no salieron del plan se concentra dentro del cuartil 1 y cuartil 3, además entre el máximo y mínimo de los que dejaron el servicio respecto de los que se quedaron no se verifica mayor diferencia. Es importante destacar que, tanto el promedio como la mediana del pago mensual es superior en los individuos que salieron del plan de los que se quedaron, no obstante no se verifica mayor diferencia respecto de contar o no con dependientes en los usuarios que abandonaron el plan. 
+
+
+### Room 9
 
 ### Room 10
 
@@ -263,3 +385,4 @@ ggplot(data, aes(x = Churn, y = MonthlyCharges, fill = PaymentMethod)) +
 **Interpretación**
 
 Los montos de pago de aquellos que abandonan el servicio son superiores a aquellos que permanecen con excepción de los que pagan por cheque electrónico. 
+>>>>>>> 16a0e5d045a195ca5c3f5f437c1fe49e9633df67
