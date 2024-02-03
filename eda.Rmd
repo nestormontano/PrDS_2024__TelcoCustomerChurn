@@ -39,13 +39,15 @@ data %>%
 
 ## EDA Univariado
 
+
+### Todas las variables
 ```{r}
 skim(data)
 ```
 
 
 
-
+### Posibles outliers
 ```{r}
 data %>% 
   reframe( 
@@ -54,6 +56,14 @@ data %>%
       Valor= quantile( TotalCharges, c(0, 0.2, 0.25, 0.50 ,0.75, 0.98, 1), na.rm= T)
     )
     )
+```
+
+### Balanceo de datos
+
+```{r}
+data %>% 
+  group_by(Churn) %>% 
+  count()
 ```
 
 
