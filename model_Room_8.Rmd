@@ -40,6 +40,20 @@ data %>%
                              labels= c('no', 'si') )
   ) ->
   data
+
+data %>% 
+        summarise_all(list(
+                .n=~n(),
+                .na=~sum(is.na(.)),
+                .min=~min(.,na.rm = T),
+                .max=~max(.,na.rm = T),
+                .clase=~class(.),
+                .valor_distinto=~n_distinct(.)
+        )) %>% 
+        mutate(across(everything(),~as.character(.))) %>% 
+        pivot_longer(everything(),
+                     names_to = c("varible",".value"),
+                     names_sep = c("_\\."))
 ```
 
 # EDA
