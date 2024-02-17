@@ -1,9 +1,0 @@
-"0","```r
-
-data %>%  group_by(Churn) %>% 
-  summarise(n = n(),
-            promedio = mean(TotalCharges,na.rm = T),
-            n_missing = sum(is.na(TotalCharges)),
-            desv = sd(TotalCharges, na.rm =T)) -> t4
-t4
-```"
