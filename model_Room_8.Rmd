@@ -43,7 +43,7 @@ data %>%
 
 data %>% 
         summarise_all(list(
-                .n=~n(),
+                .n=~sum(!is.na(.)),
                 .na=~sum(is.na(.)),
                 .min=~min(.,na.rm = T),
                 .max=~max(.,na.rm = T),
@@ -53,7 +53,7 @@ data %>%
         mutate(across(everything(),~as.character(.))) %>% 
         pivot_longer(everything(),
                      names_to = c("varible",".value"),
-                     names_sep = c("_\\."))
+                     names_sep = c("_\\.")) %>% view()
 ```
 
 # EDA
