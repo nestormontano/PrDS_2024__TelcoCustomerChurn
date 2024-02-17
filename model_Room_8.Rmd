@@ -19,6 +19,8 @@ library(tidyverse)
 library(magrittr)
 library(skimr)
 library(janitor)
+library(tidymodels)
+library(ranger)
 ```
 
 ### Importacion
@@ -34,12 +36,7 @@ data %>% glimpse
 ```
 
 ```{r}
-data %>% 
-  mutate(
-    SeniorCitizen= factor(SeniorCitizen, levels= c(0, 1), 
-                             labels= c('no', 'si') )
-  ) ->
-  data
+
 
 data %>% 
         summarise_all(list(
@@ -49,11 +46,20 @@ data %>%
                 .max=~max(.,na.rm = T),
                 .clase=~class(.),
                 .valor_distinto=~n_distinct(.)
-        )) %>% 
-        mutate(across(everything(),~as.character(.))) %>% 
+        )) %>% mutate(across(everything(),~as.character(.))) %>% 
         pivot_longer(everything(),
                      names_to = c("varible",".value"),
                      names_sep = c("_\\.")) %>% view()
+<<<<<<< HEAD
+=======
+
+data %>% 
+  mutate(
+    SeniorCitizen= factor(SeniorCitizen, levels= c(0, 1), 
+                             labels= c('no', 'si') )
+  ) ->
+  data
+>>>>>>> 7cd8ba97751ace4aa14551661448055fe211cd56
 ```
 
 # EDA
@@ -84,7 +90,9 @@ data %>%
 ```{r}
 data %>% 
   group_by(Churn) %>% 
-  count()
+  count(name = "frec") %>%
+ungroup() %>%
+mutate( Porc= frec/sum(frec))
 ```
 
 ## EDA Multivariado
@@ -410,3 +418,57 @@ ggplot(data, aes(x = Churn, y = MonthlyCharges, fill = PaymentMethod)) +
 **Interpretación**
 
 Los montos de pago de aquellos que abandonan el servicio son superiores a aquellos que permanecen con excepción de los que pagan por cheque electrónico. 
+
+
+##Matriz de Correlación
+
+```{r}
+#data %>%  select(-customerID) %>% GGally::ggpairs()
+data %>%  select_if(where(is.numeric)) %>% GGally::ggpairs()
+
+```
+
+
+## Modelamiento 
+
+**Train - Test Split**
+
+```{r}
+
+set.seed(1234) # Semilla para aleatorios
+split <- data %>%
+initial_split(
+prop = 0.8, # Porcentaje al train
+strata = Churn # Estratificación del muestreo
+)
+
+
+
+
+```
+
+**data de entrenamiento**
+
+```{r}
+train <- training(split)
+dim(train)
+```
+
+**data de prueba**
+
+```{r}
+test <- testing(split)
+dim(test)
+```
+**Preprocesamiento**
+
+***Balanceo de datos***
+
+```{r}
+
+
+
+```
+
+
+
