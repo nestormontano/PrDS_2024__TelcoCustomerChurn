@@ -50,8 +50,7 @@ data %>%
         pivot_longer(everything(),
                      names_to = c("varible",".value"),
                      names_sep = c("_\\.")) %>% view()
-<<<<<<< HEAD
-=======
+
 
 data %>% 
   mutate(
@@ -59,7 +58,7 @@ data %>%
                              labels= c('no', 'si') )
   ) ->
   data
->>>>>>> 7cd8ba97751ace4aa14551661448055fe211cd56
+
 ```
 
 # EDA
