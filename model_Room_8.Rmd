@@ -396,3 +396,13 @@ ggplot(data, aes(x = Churn, y = MonthlyCharges, fill = PaymentMethod)) +
 **Interpretación**
 
 Los montos de pago de aquellos que abandonan el servicio son superiores a aquellos que permanecen con excepción de los que pagan por cheque electrónico. 
+
+
+##Matriz de Correlación
+
+```{r}
+data %>%  select_if(where(is.numeric)) %>% cor()
+
+
+```
+
