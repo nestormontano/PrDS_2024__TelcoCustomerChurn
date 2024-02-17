@@ -3,27 +3,396 @@ title: "model_room_8"
 output: html_document
 date: "2024-02-17"
 ---
+---
+title: "Modelo Room 8"
+output:
+  html_document:
+    df_print: paged
+editor_options:
+  chunk_output_type: console
+---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+## Preliminares
+
+```{r}
+library(tidyverse)
+library(magrittr)
+library(skimr)
+library(janitor)
 ```
 
-## R Markdown
+### Importacion
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+data <- read_csv('Data/WA_Fn-UseC_-Telco-Customer-Churn.csv')
 ```
 
-## Including Plots
+#### Verificar y corregir columnas
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+data %>% glimpse
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+data %>% 
+  mutate(
+    SeniorCitizen= factor(SeniorCitizen, levels= c(0, 1), 
+                             labels= c('no', 'si') )
+  ) ->
+  data
+```
+
+# EDA
+
+## EDA Univariado
+
+
+### Todas las variables
+```{r}
+skim(data)
+```
+
+
+### Posibles outliers
+
+```{r}
+data %>% 
+  reframe( 
+    tibble(
+      Descrip= c('P_0', 'P_02', 'P_25', 'P_50' , 'P_75', 'P_98', 'P_100') ,
+      Valor= quantile( TotalCharges, c(0, 0.2, 0.25, 0.50 ,0.75, 0.98, 1), na.rm= T)
+    )
+    )
+```
+
+### Balanceo de datos
+
+```{r}
+data %>% 
+  group_by(Churn) %>% 
+  count()
+```
+
+## EDA Multivariado
+=======
+
+## EDA Bivariado
+
+### Room 2
+
+#### Genero vs Churn
+
+**Tabla**
+
+```{r}
+
+```
+
+**Grafico**
+
+```{r}
+
+```
+
+**Interpretacion**
+
+#### PhoneService vs Churn
+
+```{r}
+
+```
+
+**Interpretacion**
+
+### Room 4
+
+#### SeniorCitizen vs Churn
+
+**Tabla**
+
+```{r}
+data %>%
+  group_by(SeniorCitizen, Churn) %>%
+  summarise(
+    N = n(),
+    Porc = round(100*N/nrow(data),2)
+  ) %>%
+  mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Sc
+valores_Sc
+```
+
+```{r echo=T}
+# Comentado por conflictos con paquete
+# tigerstats::rowPerc(xtabs(~SeniorCitizen+Churn, data=data) )
+```
+
+**Gráfico**
+
+```{r}
+ggplot(valores_Sc, aes(x = SeniorCitizen, y = Porc_grupo, fill = Churn)) +
+  geom_col(stat = "identity", position = "dodge") +
+  geom_text(aes(label = Porc_grupo), vjust = 1.5,
+            position = position_dodge(.9))
+```
+
+**Interpretación**
+
+De los adultos mayores el 41% abandonó el servicio, mientras que de los no adultos mayores apenas un 24% abandonó el servicio. Aparentemente, un adulto mayor tiene mayor probabilidad de abandonar el servicio. 
+
+#### MultipleLines vs Churn
+
+**Tabla**
+
+```{r}
+data %>%
+  group_by(MultipleLines, Churn) %>%
+  summarise(
+    N = n(),
+    Porc = round(100*N/nrow(data),2)
+  ) %>%
+  mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Ml
+valores_Ml
+```
+
+```{r echo=T}
+# Comentado por conflictos con paquete
+# tigerstats::rowPerc(xtabs(~MultipleLines+Churn, data=data) )
+```
+
+**Gráfico**
+
+```{r}
+ggplot(valores_Ml, aes(x = MultipleLines, y = N, fill = Churn)) +
+  geom_col(stat = "identity", position = "dodge") +
+  geom_text(aes(label = N), vjust = 1.5,
+            position = position_dodge(.9))
+```
+
+
+**Interpretación**
+
+Entre las categorías de MultipleLines no hay mayor diferencia, entre los que abandonan o no el servicio. Los porcentajes son muy parecidos. 
+
+
+#### TechSupport vs Churn
+
+```{r}
+data %>%
+  group_by(TechSupport, Churn) %>%
+  summarise(
+    N = n(),
+    Porc = round(100*N/nrow(data),2)
+  ) %>%
+  mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Ts
+valores_Ts
+```
+
+```{r echo=T}
+# Comentado por conflictos con paquete
+# tigerstats::rowPerc(xtabs(~TechSupport+Churn, data=data) )
+```
+
+**Gráfico**
+
+```{r}
+ggplot(valores_Ts, aes(x = TechSupport, y = N, fill = Churn)) +
+  geom_col(stat = "identity", position = "dodge") +
+  geom_text(aes(label = N), vjust = 1.5,
+            position = position_dodge(.9))
+```
+
+**Interpretación**
+
+Los que no cuentan con soporte técnico, el 41.68% abandona el servicio. Por otro lado, los que si cuentan con soporte apenas un 15.17% abandona el servicio y los que no tienen internet contratado solo un 7.40% abandona el servicio.
+
+
+#### PaymentMethod vs Churn
+
+```{r}
+data %>%
+  group_by(PaymentMethod, Churn) %>%
+  summarise(
+    N = n(),
+    Porc = round(100*N/nrow(data),2)
+  ) %>%
+  mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Pm
+valores_Pm
+```
+
+```{r echo=T}
+# Comentado por conflictos con paquete
+# tigerstats::rowPerc(xtabs(~PaymentMethod+Churn, data=data) )
+```
+
+**Gráfico**
+
+```{r}
+ggplot(valores_Pm, aes(x = PaymentMethod, y = N, fill = Churn)) +
+  geom_col(stat = "identity", position = "dodge") +
+  geom_text(aes(label = N), vjust = 1.5,
+            position = position_dodge(.9))
+```
+
+**Interpretación**
+ 
+A excepción de los que pagan con cheque electrónico los porcentajes de abandono son muy parecidos. En el caso de los que pagan con cheque electrónico un 45.29% abandona el servicio.
+
+
+
+### Room 6
+
+
+
+
+
+### Room 8
+
+#### Eda Bivariado entre churn y Dependents
+
+
+```{r}
+data %>% tabyl(Churn, Dependents ) -> t1
+
+t1 %>% adorn_totals(c("row", "col")) %>% adorn_percentages("all") %>%
+adorn_pct_formatting(rounding = "half up", digits = 0) %>% adorn_ns() %>%
+  adorn_title("combined") %>% knitr::kable()
+
+data %>% count(Churn, Dependents) %>%
+  mutate(porc = n / sum(n)) %>% 
+  ggplot(aes(fill=Dependents, y=porc, x=Churn)) + 
+    geom_col(position="stack") +
+    geom_text(aes(label=scales::percent(porc)),position = position_stack(vjust=0.5))+
+  scale_y_continuous(labels = scales::percent_format()) 
+
+
+```
+
+De la muestra analizada alrededor del 27% corresponde a individuos que dejaron sus planes en el último mes. Además se conoce que el 4,6% de estos individuos contaban con personas dependientes.  
+
+#### Eda Bivariado entre churn y OnlineSecurity
+
+
+```{r}
+
+
+data %>% tabyl(Churn,OnlineSecurity ) -> t2
+
+t2 %>% adorn_totals(c("row", "col")) %>% adorn_percentages("all") %>%
+adorn_pct_formatting(rounding = "half up", digits = 0) %>% adorn_ns()%>% adorn_title("combined")%>% knitr::kable()
+
+
+data %>% count(Churn, OnlineSecurity) %>%
+  mutate(porc = n / sum(n)) %>% 
+  ggplot(aes(fill=OnlineSecurity, y=porc, x=Churn)) + 
+    geom_col(position="stack") +
+    geom_text(aes(label=scales::percent(porc)),position = position_stack(vjust=0.5))+
+  scale_y_continuous(labels = scales::percent_format()) 
+
+
+```
+
+El 20,74% de los indviduos analizados y que abandonaron el servicio no contaban con seguridad en línea. Por otro lado aquellos que no salieron del plan reflejaron una participación similar con relación al servicio de seguridad en línea. 
+
+
+#### Eda Bivariado entre Churn y StreamingMovies  
+
+```{r}
+
+data %>% tabyl(Churn,StreamingMovies) -> t3
+
+t3 %>% adorn_totals(c("row", "col")) %>% adorn_percentages("all") %>%
+adorn_pct_formatting(rounding = "half up", digits = 0) %>% adorn_ns()%>% adorn_title("combined")%>% knitr::kable()
+
+
+data %>% count(Churn, StreamingMovies) %>%
+  mutate(porc = n / sum(n)) %>% 
+  ggplot(aes(fill=StreamingMovies, y=porc, x=Churn)) + 
+    geom_col(position="stack") +
+    geom_text(aes(label=scales::percent(porc)),position = position_stack(vjust=0.5))+
+  scale_y_continuous(labels = scales::percent_format()) 
+
+
+```
+
+El 13,32% de los indviduos analizados y que abandonaron el servicio no contaban con servicio de Streaming Movies. Sin embargo, tanto para el grupo que abandonaron o mantuvieron el servicio no se evidencia una importancia relevante para su salidad del plan.  
+
+#### Eda Bivariado entre churn y Total Charges
+
+```{r}
+
+data %>%  group_by(Churn) %>% 
+  summarise(n = n(),
+            promedio = mean(TotalCharges,na.rm = T),
+            n_missing = sum(is.na(TotalCharges)),
+            desv = sd(TotalCharges, na.rm =T)) -> t4
+t4
+
+data %>%
+  ggplot(aes(x = Churn, y = TotalCharges, fill = Churn)) +
+  geom_boxplot() +
+  stat_summary(fun = mean, geom = "point", shape = 3, size = 3,
+               color = "white", position = position_dodge(width = 0.75)) +
+  labs(title = "Churn vs Total Charges",
+       x = "Churn",
+       y = "Total Charges") +
+        theme_minimal()
+
+```
+
+
+En promedio el gasto total en el servicio de telecomunicaciones para los individuos que salieron del plan es inferior por usuario en alrededor de USD 1000. Para los usuarios que salieron del servicio se evidencia datos atípicos elevados que alcanzan los valores máximos de los usarios que no salieron del servicio. Cabe señalar que, para los usuarios que no abandoron el servicio su extipendio total del plan se concentra entre el rango intercuartílico. Adicionalmente, se observa que la variable gasto total cuenta con 11 valores perdidos. 
+
+
+#### Eda Multivariado entre MonthlyCharges vs Dependents vs Churn
+
+```{r}
+data %>%  group_by(Churn,Dependents) %>% 
+    summarise(n = n(),
+            promedio = mean(MonthlyCharges,na.rm = T),
+            n_missing = sum(is.na(MonthlyCharges)),
+            desv = sd(MonthlyCharges, na.rm =T)) -> t5
+t5
+data %>%
+  ggplot(aes(x = Churn, y = MonthlyCharges, fill = Dependents)) +
+  geom_boxplot() +
+  stat_summary(fun = mean, geom = "point", shape = 3, size = 3, color = "white", position = position_dodge(width = 0.75)) +
+  labs(title = "Monthtly Charges for Dependents vs Churn",
+       x = "Churn",
+       y = "Monthly Charges")
+
+```
+
+La distribución del gasto mensual de aquellos individuos que no salieron del plan se concentra dentro del cuartil 1 y cuartil 3, además entre el máximo y mínimo de los que dejaron el servicio respecto de los que se quedaron no se verifica mayor diferencia. Es importante destacar que, tanto el promedio como la mediana del pago mensual es superior en los individuos que salieron del plan de los que se quedaron, no obstante no se verifica mayor diferencia respecto de contar o no con dependientes en los usuarios que abandonaron el plan. 
+
+
+### Room 9
+
+### Room 10
+
+
+## EDA Multivariado
+
+
+### Room 4
+
+####  MonthlyCharges vs PaymentMethod vs Churn
+
+**Gráfico 1**
+
+```{r}
+ggplot(data, aes(x = PaymentMethod, y = MonthlyCharges, fill = Churn)) +
+  geom_boxplot()
+```
+**Interpretación**
+
+
+**Gráfico 2**
+
+```{r}
+ggplot(data, aes(x = Churn, y = MonthlyCharges, fill = PaymentMethod)) +
+  geom_boxplot()
+```
+
+**Interpretación**
+
+Los montos de pago de aquellos que abandonan el servicio son superiores a aquellos que permanecen con excepción de los que pagan por cheque electrónico. 
