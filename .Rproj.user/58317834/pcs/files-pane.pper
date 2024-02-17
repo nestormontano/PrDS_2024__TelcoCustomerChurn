@@ -2,7 +2,7 @@
     "sortOrder": [
         {
             "columnIndex": 2,
-            "ascending": true
+            "ascending": false
         }
     ],
     "path": "~/Documents/proyecto_grado_ssece/PrDS_2024__TelcoCustomerChurn"
