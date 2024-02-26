@@ -21,6 +21,8 @@ library(skimr)
 library(janitor)
 library(tidymodels)
 library(ranger)
+library(xgboost)
+library(vip)
 ```
 
 ### Importacion
@@ -739,5 +741,167 @@ library(vip)
 rf_model_fin %>%
   vip(geom = "point")
 ```
+
+**Modelo Boosting XGBoost**
+
+Como parte del ejercicio de selección del mejor modelo para la determinación de la mejor estrategia para retención de clientes, se utiliza el algoritmo XGboost con la finalidad de elegir el modelo con mayor poder predictivo. 
+
+Para tal efecto, la aplicación del algoritmo XGboost inicia a partir de la receta establecida para los datos de abandono de clientes del servicio de telecomunicaciones. 
+
+
+```{r}
+#Especificación del modelo 
+
+xgb_sp <- boost_tree(mtry = tune(), trees = tune(),
+  loss_reduction = tune(), learn_rate= tune() ) %>%
+  set_engine("xgboost") %>%
+  set_mode("classification")
+
+xgb_sp %>%
+  translate()
+
+
+
+```
+
+**Afinamiento de Malla de búsqueda**
+
+Previo a establecer la malla de búsqueda el algoritmo requiere la data incorporada las funciones establecidas en la receta, por tal motivo se aplica prep y bake. Posteriormente, se obtiene la malla de búsqueda
+
+```{r}
+
+receta_prep = prep(receta, train)
+finalize(mtry(), bake(receta_prep, new_data = NULL ))
+
+set.seed(123)
+xgb_grid <- xgb_sp %>%
+  parameters() %>%
+  finalize(bake(receta_prep, new_data = NULL)) %>%
+  grid_latin_hypercube(size = 10)
+
+xgb_grid
+
+
+```
+
+***Work Flow***
+
+```{r}
+
+xgb_wflow <-
+  workflow() %>%
+  add_recipe(receta) %>%
+  add_model(xgb_sp)
+
+xgb_wflow
+```
+
+***Entrenamiento de Malla de Busqueda en la Crossvalidation  - Xgboost***
+
+```{r}
+
+set.seed(123)
+
+xgb_tuned <- tune_grid(
+  xgb_wflow,
+  resamples= cv,
+  grid = xgb_grid,
+  metrics = metricas,
+  control= control_grid(allow_par = T, save_pred = T)
+  )
+
+xgb_tuned
+
+
+```
+
+***Mejor modelo***
+
+Evaluamos que modelo resulto mejor
+
+```{r}
+show_best(xgb_tuned, metric = 'accuracy', n = 10)
+
+```
+
+```{r}
+show_best(xgb_tuned, metric = 'sens', n = 10)
+
+```
+
+```{r}
+show_best(xgb_tuned, metric = 'spec', n = 10)
+
+```
+
+```{r}
+show_best(xgb_tuned, metric = 'bal_accuracy', n = 10)
+```
+**Selección del modelo final***
+
+La selección de los hipepáramestros es con base al mejor modelo de sensibilidad y "bal_accuracy", por tanto se el modelo final resulta ser el modelo 04, no se realizá un proceso búsqueda manual del mejor modelo debido a la amplitud de valores que puede tomar el learn_rate y la función de costo, así como la discrecionalidad de la amplitud de búsqueda. 
+
+```{r}
+xgb_pars_fin <- select_best(xgb_tuned, metric = 'sens')
+xgb_wflow_fin <-
+  xgb_wflow %>%
+  finalize_workflow(xgb_pars_fin)
+
+xgb_wflow_fin
+
+```
+
+
+**Entrenar el modelo final**
+
+```{r}
+xgb_fitted <- fit(xgb_wflow_fin, train)
+xgb_fitted
+```
+
+***Selección del modelo***
+
+```{r}
+
+xgb_model_fin <- pull_workflow_fit(xgb_fitted)
+xgb_model_fin
+
+```
+**Evaluación del modelo en la data de entrenamiento y prueba**
+
+```{r}
+train %>%
+  predict(xgb_fitted , new_data = . ) %>%
+  mutate(Real= train$Churn) %>%
+  conf_mat(truth = Real, estimate = .pred_class ) %>%
+  summary
+
+
+```
+
+
+```{r}
+
+test %>%
+  predict(xgb_fitted , new_data = . ) %>%
+  mutate(Real= test$Churn) %>%
+  conf_mat(truth = Real, estimate = .pred_class ) %>%
+  summary
+
+```
+***Importancia de las variables en el modelo****
+
+```{r}
+
+vip(xgb_model_fin)
+
+```
+
+Analizando la importancia de las variables en el modelo se verifica que el gasto mensual y total presentan una alta importancia en las variables sin embargo el gasto total es una combinación lineal del gasto mensual, por lo que se podría excluir del modelo una de las variabales para probar si incrementa su capacidad de predicción con respecto a sensibilidad y bal_accuracy. 
+
+***Conclución***
+
+Del análisis realizado se evidencia que ambos modelos (Random Forest y Xgboost ) presentan muy buena estimación con relación a sensibilidad, es decir con la capacidad de predicción de los individuos que abandonan el servicio, no obstante Xgboost presenta un resultado superior en el test de prueba (0.74 > 0.72), por tanto el modelo seleccionado es Xgboost.  
+
 
 
