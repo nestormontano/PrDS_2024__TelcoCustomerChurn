@@ -899,7 +899,7 @@ vip(xgb_model_fin)
 
 Analizando la importancia de las variables en el modelo se verifica que el gasto mensual y total presentan una alta importancia en las variables sin embargo el gasto total es una combinación lineal del gasto mensual, por lo que se podría excluir del modelo una de las variabales para probar si incrementa su capacidad de predicción con respecto a sensibilidad y bal_accuracy. 
 
-***Conclución***
+***Conclusión***
 
 Del análisis realizado se evidencia que ambos modelos (Random Forest y Xgboost ) presentan muy buena estimación con relación a sensibilidad, es decir con la capacidad de predicción de los individuos que abandonan el servicio, no obstante Xgboost presenta un resultado superior en el test de prueba (0.74 > 0.72), por tanto el modelo seleccionado es Xgboost.  
 
