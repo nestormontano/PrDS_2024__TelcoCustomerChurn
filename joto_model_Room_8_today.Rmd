@@ -1,0 +1,623 @@
+---
+title: "model_room_8"
+output: html_document
+date: "2024-02-17"
+---
+---
+title: "Modelo Room 8"
+output:
+  html_document:
+    df_print: paged
+editor_options:
+  chunk_output_type: console
+---
+
+## Preliminares
+
+```{r}
+library(tidyverse)
+library(magrittr)
+library(skimr)
+library(janitor)
+library(tidymodels)
+library(ranger)
+```
+
+### Importacion
+
+```{r}
+data <- read_csv('Data/WA_Fn-UseC_-Telco-Customer-Churn.csv')
+```
+
+#### Verificar y corregir columnas
+
+```{r}
+data %>% glimpse
+```
+
+```{r}
+
+
+data %>% 
+        summarise_all(list(
+                .n=~sum(!is.na(.)),
+                .na=~sum(is.na(.)),
+                .min=~min(.,na.rm = T),
+                .max=~max(.,na.rm = T),
+                .clase=~class(.),
+                .valor_distinto=~n_distinct(.)
+        )) %>% mutate(across(everything(),~as.character(.))) %>% 
+        pivot_longer(everything(),
+                     names_to = c("varible",".value"),
+                     names_sep = c("_\\.")) %>% view()
+
+
+#Convertir a factor
+data %>%
+  mutate( Churn = factor(Churn,
+  levels= c("Yes","No"),
+  labels= c("si", "no"))
+  ) -> data
+
+
+
+data %>%
+  mutate(
+    SeniorCitizen = factor(SeniorCitizen, levels = c(0, 1), labels = c('no', 'si')),
+    gender = factor(gender, levels = c('Female', 'Male'), labels = c('Mujeres', 'Hombres')),
+    Partner = factor(Partner, levels = c('Yes', 'No'), labels = c('si', 'No')),
+    Dependents = factor(Dependents, levels = c('Yes', 'No'), labels = c('si', 'No')),
+    PhoneService = factor(PhoneService, levels = c('Yes', 'No'), labels = c('si', 'No')),
+    PaperlessBilling = factor(PaperlessBilling, levels = c('Yes', 'No'), labels = c('si', 'No')),
+    MultipleLines = factor(MultipleLines, levels = c('Yes', 'No', "No phone service"), labels = c('si', 'no', 'sin servicio')),
+    InternetService = factor(InternetService, levels = c('DSL', 'Fiber optic', 'No'), labels = c('DSL', 'Fibra optica', 'No')),
+    OnlineSecurity = factor(OnlineSecurity, levels = c('No', 'Yes', 'No internet service'), labels = c('No', 'Yes', 'sin servicio')),
+    OnlineBackup = factor(OnlineBackup, levels = c('Yes', 'No', 'No internet service'), labels = c('si', 'no', 'sin servicio')),
+    DeviceProtection = factor(DeviceProtection, levels = c('Yes', 'No', 'No internet service'), labels = c('si', 'no', 'sin servicio')),
+    TechSupport = factor(TechSupport, levels = c('Yes', 'No', 'No internet service'), labels = c('si', 'no', 'sin servicio')),
+    StreamingTV = factor(StreamingTV, levels = c('Yes', 'No', 'No internet service'), labels = c('si', 'no', 'sin servicio')),
+    StreamingMovies = factor(StreamingMovies, levels = c('Yes', 'No', 'No internet service'), labels = c('si', 'no', 'sin servicio')),
+    Contract = factor(Contract, levels = c('Month-to-month', 'One year', 'Two year'), labels = c('mes a mes', 'un año', 'dos años')),
+    PaymentMethod = factor(PaymentMethod, levels = c('Electronic check', 'Mailed check', 'Bank transfer (automatic)', 'Credit card (automatic)'), labels = c('cheque electronico', 'cheque mail', 'transferencia bancaria', 'transferencia automatica'))
+  ) -> data
+
+
+
+
+
+```
+
+# EDA
+
+## EDA Univariado
+
+
+### Todas las variables
+```{r}
+skim(data)
+```
+
+
+### Posibles outliers
+
+```{r}
+data %>% 
+  reframe( 
+    tibble(
+      Descrip= c('P_0', 'P_02', 'P_25', 'P_50' , 'P_75', 'P_98', 'P_100') ,
+      Valor= quantile( TotalCharges, c(0, 0.2, 0.25, 0.50 ,0.75, 0.98, 1), na.rm= T)
+    )
+    )
+```
+
+### Balanceo de datos
+
+```{r}
+data %>% 
+  group_by(Churn) %>% 
+  count(name = "frec") %>%
+ungroup() %>%
+mutate( Porc= frec/sum(frec))
+
+data %>%
+group_by(Churn) %>%
+count( name = 'frec') %>%
+ungroup() %>%
+mutate( Porc= frec/sum(frec)) %>%
+ggplot( aes(x= Churn, y= Porc)) +
+geom_segment( aes(xend= Churn, y=0, yend=Porc),
+color= "steelblue", linewidth= 1) +
+geom_point( size=5, color= "steelblue") +
+coord_flip() +
+scale_y_continuous( labels = percent_format()) +
+labs(title= 'Porcentaje de Clientes que Abandonan',
+y= "Porcentaje", x= "Churn") +
+theme_bw()
+
+
+```
+
+El porcentaje de clientes que abandonan el servicio de telecomunicaciones es aproximadamente 3 a 1 en el muestra de análisis. 
+
+## EDA Multivariado
+=======
+
+## EDA Bivariado
+
+### Room 2
+
+#### Genero vs Churn
+
+**Tabla**
+
+```{r}
+
+```
+
+**Grafico**
+
+```{r}
+
+```
+
+**Interpretacion**
+
+#### PhoneService vs Churn
+
+```{r}
+
+```
+
+**Interpretacion**
+
+### Room 4
+
+#### SeniorCitizen vs Churn
+
+**Tabla**
+
+```{r}
+data %>%
+  group_by(SeniorCitizen, Churn) %>%
+  summarise(
+    N = n(),
+    Porc = round(100*N/nrow(data),2)
+  ) %>%
+  mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Sc
+valores_Sc
+```
+
+```{r echo=T}
+# Comentado por conflictos con paquete
+# tigerstats::rowPerc(xtabs(~SeniorCitizen+Churn, data=data) )
+```
+
+**Gráfico**
+
+```{r}
+ggplot(valores_Sc, aes(x = SeniorCitizen, y = Porc_grupo, fill = Churn)) +
+  geom_col(stat = "identity", position = "dodge") +
+  geom_text(aes(label = Porc_grupo), vjust = 1.5,
+            position = position_dodge(.9))
+```
+
+**Interpretación**
+
+De los adultos mayores el 41% abandonó el servicio, mientras que de los no adultos mayores apenas un 24% abandonó el servicio. Aparentemente, un adulto mayor tiene mayor probabilidad de abandonar el servicio. 
+
+#### MultipleLines vs Churn
+
+**Tabla**
+
+```{r}
+data %>%
+  group_by(MultipleLines, Churn) %>%
+  summarise(
+    N = n(),
+    Porc = round(100*N/nrow(data),2)
+  ) %>%
+  mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Ml
+valores_Ml
+```
+
+```{r echo=T}
+# Comentado por conflictos con paquete
+# tigerstats::rowPerc(xtabs(~MultipleLines+Churn, data=data) )
+```
+
+**Gráfico**
+
+```{r}
+ggplot(valores_Ml, aes(x = MultipleLines, y = N, fill = Churn)) +
+  geom_col(stat = "identity", position = "dodge") +
+  geom_text(aes(label = N), vjust = 1.5,
+            position = position_dodge(.9))
+```
+
+
+**Interpretación**
+
+Entre las categorías de MultipleLines no hay mayor diferencia, entre los que abandonan o no el servicio. Los porcentajes son muy parecidos. 
+
+
+#### TechSupport vs Churn
+
+```{r}
+data %>%
+  group_by(TechSupport, Churn) %>%
+  summarise(
+    N = n(),
+    Porc = round(100*N/nrow(data),2)
+  ) %>%
+  mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Ts
+valores_Ts
+```
+
+```{r echo=T}
+# Comentado por conflictos con paquete
+# tigerstats::rowPerc(xtabs(~TechSupport+Churn, data=data) )
+```
+
+**Gráfico**
+
+```{r}
+ggplot(valores_Ts, aes(x = TechSupport, y = N, fill = Churn)) +
+  geom_col(stat = "identity", position = "dodge") +
+  geom_text(aes(label = N), vjust = 1.5,
+            position = position_dodge(.9))
+```
+
+**Interpretación**
+
+Los que no cuentan con soporte técnico, el 41.68% abandona el servicio. Por otro lado, los que si cuentan con soporte apenas un 15.17% abandona el servicio y los que no tienen internet contratado solo un 7.40% abandona el servicio.
+
+
+#### PaymentMethod vs Churn
+
+```{r}
+data %>%
+  group_by(PaymentMethod, Churn) %>%
+  summarise(
+    N = n(),
+    Porc = round(100*N/nrow(data),2)
+  ) %>%
+  mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Pm
+valores_Pm
+```
+
+```{r echo=T}
+# Comentado por conflictos con paquete
+# tigerstats::rowPerc(xtabs(~PaymentMethod+Churn, data=data) )
+```
+
+**Gráfico**
+
+```{r}
+ggplot(valores_Pm, aes(x = PaymentMethod, y = N, fill = Churn)) +
+  geom_col(stat = "identity", position = "dodge") +
+  geom_text(aes(label = N), vjust = 1.5,
+            position = position_dodge(.9))
+```
+
+**Interpretación**
+ 
+A excepción de los que pagan con cheque electrónico los porcentajes de abandono son muy parecidos. En el caso de los que pagan con cheque electrónico un 45.29% abandona el servicio.
+
+
+
+### Room 6
+
+
+
+
+
+### Room 8
+
+#### Eda Bivariado entre churn y Dependents
+
+
+```{r}
+data %>% tabyl(Churn, Dependents ) -> t1
+
+t1 %>% adorn_totals(c("row", "col")) %>% adorn_percentages("all") %>%
+adorn_pct_formatting(rounding = "half up", digits = 0) %>% adorn_ns() %>%
+  adorn_title("combined") %>% knitr::kable()
+
+data %>% count(Churn, Dependents) %>%
+  mutate(porc = n / sum(n)) %>% 
+  ggplot(aes(fill=Dependents, y=porc, x=Churn)) + 
+    geom_col(position="stack") +
+    geom_text(aes(label=scales::percent(porc)),position = position_stack(vjust=0.5))+
+  scale_y_continuous(labels = scales::percent_format()) 
+
+
+```
+
+De la muestra analizada alrededor del 27% corresponde a individuos que dejaron sus planes en el último mes. Además se conoce que el 4,6% de estos individuos contaban con personas dependientes.  
+
+#### Eda Bivariado entre churn y OnlineSecurity
+
+
+```{r}
+
+
+data %>% tabyl(Churn,OnlineSecurity ) -> t2
+
+t2 %>% adorn_totals(c("row", "col")) %>% adorn_percentages("all") %>%
+adorn_pct_formatting(rounding = "half up", digits = 0) %>% adorn_ns()%>% adorn_title("combined")%>% knitr::kable()
+
+
+data %>% count(Churn, OnlineSecurity) %>%
+  mutate(porc = n / sum(n)) %>% 
+  ggplot(aes(fill=OnlineSecurity, y=porc, x=Churn)) + 
+    geom_col(position="stack") +
+    geom_text(aes(label=scales::percent(porc)),position = position_stack(vjust=0.5))+
+  scale_y_continuous(labels = scales::percent_format()) 
+
+
+```
+
+El 20,74% de los indviduos analizados y que abandonaron el servicio no contaban con seguridad en línea. Por otro lado aquellos que no salieron del plan reflejaron una participación similar con relación al servicio de seguridad en línea. 
+
+
+#### Eda Bivariado entre Churn y StreamingMovies  
+
+```{r}
+
+data %>% tabyl(Churn,StreamingMovies) -> t3
+
+t3 %>% adorn_totals(c("row", "col")) %>% adorn_percentages("all") %>%
+adorn_pct_formatting(rounding = "half up", digits = 0) %>% adorn_ns()%>% adorn_title("combined")%>% knitr::kable()
+
+
+data %>% count(Churn, StreamingMovies) %>%
+  mutate(porc = n / sum(n)) %>% 
+  ggplot(aes(fill=StreamingMovies, y=porc, x=Churn)) + 
+    geom_col(position="stack") +
+    geom_text(aes(label=scales::percent(porc)),position = position_stack(vjust=0.5))+
+  scale_y_continuous(labels = scales::percent_format()) 
+
+
+```
+
+El 13,32% de los indviduos analizados y que abandonaron el servicio no contaban con servicio de Streaming Movies. Sin embargo, tanto para el grupo que abandonaron o mantuvieron el servicio no se evidencia una importancia relevante para su salidad del plan.  
+
+#### Eda Bivariado entre churn y Total Charges
+
+```{r}
+
+data %>%  group_by(Churn) %>% 
+  summarise(n = n(),
+            promedio = mean(TotalCharges,na.rm = T),
+            n_missing = sum(is.na(TotalCharges)),
+            desv = sd(TotalCharges, na.rm =T)) -> t4
+t4
+
+data %>%
+  ggplot(aes(x = Churn, y = TotalCharges, fill = Churn)) +
+  geom_boxplot() +
+  stat_summary(fun = mean, geom = "point", shape = 3, size = 3,
+               color = "white", position = position_dodge(width = 0.75)) +
+  labs(title = "Churn vs Total Charges",
+       x = "Churn",
+       y = "Total Charges") +
+        theme_minimal()
+
+```
+
+
+En promedio el gasto total en el servicio de telecomunicaciones para los individuos que salieron del plan es inferior por usuario en alrededor de USD 1000. Para los usuarios que salieron del servicio se evidencia datos atípicos elevados que alcanzan los valores máximos de los usarios que no salieron del servicio. Cabe señalar que, para los usuarios que no abandoron el servicio su extipendio total del plan se concentra entre el rango intercuartílico. Adicionalmente, se observa que la variable gasto total cuenta con 11 valores perdidos. 
+
+
+#### Eda Multivariado entre MonthlyCharges vs Dependents vs Churn
+
+```{r}
+data %>%  group_by(Churn,Dependents) %>% 
+    summarise(n = n(),
+            promedio = mean(MonthlyCharges,na.rm = T),
+            n_missing = sum(is.na(MonthlyCharges)),
+            desv = sd(MonthlyCharges, na.rm =T)) -> t5
+t5
+data %>%
+  ggplot(aes(x = Churn, y = MonthlyCharges, fill = Dependents)) +
+  geom_boxplot() +
+  stat_summary(fun = mean, geom = "point", shape = 3, size = 3, color = "white", position = position_dodge(width = 0.75)) +
+  labs(title = "Monthtly Charges for Dependents vs Churn",
+       x = "Churn",
+       y = "Monthly Charges")
+
+```
+
+La distribución del gasto mensual de aquellos individuos que no salieron del plan se concentra dentro del cuartil 1 y cuartil 3, además entre el máximo y mínimo de los que dejaron el servicio respecto de los que se quedaron no se verifica mayor diferencia. Es importante destacar que, tanto el promedio como la mediana del pago mensual es superior en los individuos que salieron del plan de los que se quedaron, no obstante no se verifica mayor diferencia respecto de contar o no con dependientes en los usuarios que abandonaron el plan. 
+
+
+### Room 9
+
+### Room 10
+
+
+## EDA Multivariado
+
+
+### Room 4
+
+####  MonthlyCharges vs PaymentMethod vs Churn
+
+**Gráfico 1**
+
+```{r}
+ggplot(data, aes(x = PaymentMethod, y = MonthlyCharges, fill = Churn)) +
+  geom_boxplot()
+```
+**Interpretación**
+
+
+**Gráfico 2**
+
+```{r}
+ggplot(data, aes(x = Churn, y = MonthlyCharges, fill = PaymentMethod)) +
+  geom_boxplot()
+```
+
+**Interpretación**
+
+Los montos de pago de aquellos que abandonan el servicio son superiores a aquellos que permanecen con excepción de los que pagan por cheque electrónico. 
+
+
+##Matriz de Correlación
+
+```{r}
+#data %>%  select(-customerID) %>% GGally::ggpairs()
+data %>%  select_if(where(is.numeric)) %>% GGally::ggpairs()
+
+```
+
+
+## Modelamiento - Random Forest
+
+**Train - Test Split**
+
+```{r}
+#data %>% select(-customerID) -> data
+
+set.seed(1234) # Semilla para aleatorios
+split <- data %>%
+initial_split(
+prop = 0.8, # Porcentaje al train
+strata = Churn # Estratificación del muestreo
+)
+
+
+
+
+```
+
+**data de entrenamiento**
+
+```{r}
+train <- training(split)
+dim(train)
+```
+
+**data de prueba**
+
+```{r}
+test <- testing(split)
+dim(test)
+```
+**Preprocesamiento**
+
+***Receipe y Balanceo de datos***
+
+```{r}
+receta <- train %>%
+recipe(Churn ~ . ) %>% ## Crea la receta
+## Eliminar variables que no usaremos
+step_rm(customerID) %>%
+## Crear nuevas variables (insight desde el EDA)
+# step_mutate( account_length_anio= account_length/12 )
+## Imputar los datos
+# step_impute_mean()
+step_impute_knn(TotalCharges ) %>%
+## Estandarizacion/Normalizacion de numericas
+step_normalize( all_numeric(), -all_outcomes()) %>%
+## Crear una categoría "otros" que agrupe a categorias pequeñas
+step_other(all_nominal(), -all_outcomes() , threshold = 0.07, other = "otros") %>%
+## Crear una categoría "new" para observaciones con labels "no muestreados"
+step_novel(all_nominal(), -all_outcomes() , new_level = "new") %>%
+## Crear variables indicadoras para cada categoría
+step_dummy(all_nominal(), -all_outcomes() ) %>% # Dummy
+## Eliminar automáticamente variables con alta correlacion
+## para evitar la multicolinealidad xi ~ xj
+# step_corr(all_numeric(), -all_outcomes(), threshold = 0.9) %>%
+## Tambien podemos eliminar variables con multicolinealidad "a mano"
+#step_rm(total_day_charge, total_eve_charge,
+#total_night_charge, total_intl_charge) %>% # Eliminar
+## Eliminar columnas con varianza cercana a cero
+step_nzv(all_predictors()) %>% 
+themis::step_upsample(Churn, over_ratio = 0.9, skip= TRUE, seed= 123)  
+
+
+
+```
+
+***Entrenamiento y ajuste de Hiperparámetro***
+
+```{r}
+
+set.seed(1234)
+cv <- vfold_cv(train, v = 2, repeats = 1, strata = Churn)
+cv
+
+
+```
+
+***Métricas***
+
+```{r}
+metricas <- metric_set(accuracy, sens, spec, bal_accuracy)
+metricas
+
+
+```
+
+***Especificacion del modelo***
+
+```{r}
+rf_sp <-
+  rand_forest(
+  mtry = tune(), trees = tune(), min_n = tune() ) %>%
+  set_engine("ranger", importance = "impurity") %>%
+  set_mode("classification")
+
+```
+
+***Work Flow***
+
+```{r}
+rf_wflow <-
+  workflow() %>%
+  add_recipe(receta) %>%
+  add_model(rf_sp) 
+  rf_wflow
+
+
+```
+***Afinamiento de Hiperpárametros***
+
+```{r}
+set.seed(123)
+rf_grid <- rf_sp %>%
+## preguntamos los parametros tuneables del modelo
+parameters() %>%
+## Vamos a definir un rango para el min_n y mtry
+update(min_n= min_n( range= c(70, 170)),
+mtry= mtry( range= c(4, 7))) %>%
+grid_latin_hypercube(size = 10) #preguntar como se construye la malla
+
+
+```
+
+**Paralelización**
+
+```{r}
+#parallel::detectCores(logical=FALSE)
+
+```
+
+**Entrenamiento de Malla de Busqueda en la Crossvalidation**
+
+```{r}
+set.seed(123)
+rf_tuned <- tune_grid(
+rf_wflow, ## Modelo
+resamples= cv, ## Crossvalidation
+grid = rf_grid, ## Malla de Busqueda
+metrics = metricas, ## Metricas
+control= control_grid(allow_par = T, save_pred = T) ## Paralel y Pred
+)
+rf_tuned
+
+```
+
+
