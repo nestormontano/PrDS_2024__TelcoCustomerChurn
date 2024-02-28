@@ -315,13 +315,33 @@ ggplot(valores_Pm, aes(x = PaymentMethod, y = N, fill = Churn)) +
  
 A excepción de los que pagan con cheque electrónico los porcentajes de abandono son muy parecidos. En el caso de los que pagan con cheque electrónico un 45.29% abandona el servicio.
 
+### EDA Multivariado
 
+
+####  MonthlyCharges vs PaymentMethod vs Churn
+
+**Gráfico 1**
+
+```{r}
+ggplot(data, aes(x = PaymentMethod, y = MonthlyCharges, fill = Churn)) +
+  geom_boxplot()
+```
+**Interpretación**
+
+
+**Gráfico 2**
+
+```{r}
+ggplot(data, aes(x = Churn, y = MonthlyCharges, fill = PaymentMethod)) +
+  geom_boxplot()
+```
+
+**Interpretación**
+
+Los montos de pago de aquellos que abandonan el servicio son superiores a aquellos que permanecen con excepción de los que pagan por cheque electrónico. 
 
 ### Room 6
-
-
-
-
+### Room 7
 
 ### Room 8
 
@@ -444,36 +464,10 @@ La distribución del gasto mensual de aquellos individuos que no salieron del pl
 
 
 ### Room 9
-
 ### Room 10
 
 
-# EDA Multivariado
 
-
-## Room 4
-
-###  MonthlyCharges vs PaymentMethod vs Churn
-
-**Gráfico 1**
-
-```{r}
-ggplot(data, aes(x = PaymentMethod, y = MonthlyCharges, fill = Churn)) +
-  geom_boxplot()
-```
-**Interpretación**
-
-
-**Gráfico 2**
-
-```{r}
-ggplot(data, aes(x = Churn, y = MonthlyCharges, fill = PaymentMethod)) +
-  geom_boxplot()
-```
-
-**Interpretación**
-
-Los montos de pago de aquellos que abandonan el servicio son superiores a aquellos que permanecen con excepción de los que pagan por cheque electrónico. 
 
 
 ## Matriz de Correlación
