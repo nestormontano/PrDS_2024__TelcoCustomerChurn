@@ -3,6 +3,7 @@ title: "model_room_8"
 output: html_document
 date: "2024-02-17"
 ---
+
 ---
 title: "Modelo Room 8"
 output:
@@ -25,13 +26,13 @@ library(xgboost)
 library(vip)
 ```
 
-### Importacion
+**Importacion**
 
 ```{r}
 data <- read_csv('Data/WA_Fn-UseC_-Telco-Customer-Churn.csv')
 ```
 
-#### Verificar y corregir columnas
+**Verificar y corregir columnas**
 
 ```{r}
 data %>% glimpse
@@ -90,16 +91,15 @@ data %>%
 
 ```
 
-## EDA
+**EDA**
 
-### EDA Univariado
+*EDA Univariado*
 
+*Todas las variables*
 
-#### Todas las variables
 ```{r}
 skim(data)
 ```
-
 
 ### Posibles outliers
 
@@ -154,7 +154,7 @@ theme_bw()
 
 ```
 
-El porcentaje de clientes que abandonan el servicio de telecomunicaciones es aproximadamente 3 a 1 en el muestra de análisis. 
+El porcentaje de clientes que abandonan el servicio de telecomunicaciones es aproximadamente 3 a 1 en el muestra de análisis.
 
 ### EDA Bivariado
 
@@ -217,7 +217,7 @@ ggplot(valores_Sc, aes(x = SeniorCitizen, y = Porc_grupo, fill = Churn)) +
 
 **Interpretación**
 
-De los adultos mayores el 41% abandonó el servicio, mientras que de los no adultos mayores apenas un 24% abandonó el servicio. Aparentemente, un adulto mayor tiene mayor probabilidad de abandonar el servicio. 
+De los adultos mayores el 41% abandonó el servicio, mientras que de los no adultos mayores apenas un 24% abandonó el servicio. Aparentemente, un adulto mayor tiene mayor probabilidad de abandonar el servicio.
 
 ##### MultipleLines vs Churn
 
@@ -248,11 +248,9 @@ ggplot(valores_Ml, aes(x = MultipleLines, y = N, fill = Churn)) +
             position = position_dodge(.9))
 ```
 
-
 **Interpretación**
 
-Entre las categorías de MultipleLines no hay mayor diferencia, entre los que abandonan o no el servicio. Los porcentajes son muy parecidos. 
-
+Entre las categorías de MultipleLines no hay mayor diferencia, entre los que abandonan o no el servicio. Los porcentajes son muy parecidos.
 
 ##### TechSupport vs Churn
 
@@ -285,7 +283,6 @@ ggplot(valores_Ts, aes(x = TechSupport, y = N, fill = Churn)) +
 
 Los que no cuentan con soporte técnico, el 41.68% abandona el servicio. Por otro lado, los que si cuentan con soporte apenas un 15.17% abandona el servicio y los que no tienen internet contratado solo un 7.40% abandona el servicio.
 
-
 ##### PaymentMethod vs Churn
 
 ```{r}
@@ -314,13 +311,12 @@ ggplot(valores_Pm, aes(x = PaymentMethod, y = N, fill = Churn)) +
 ```
 
 **Interpretación**
- 
+
 A excepción de los que pagan con cheque electrónico los porcentajes de abandono son muy parecidos. En el caso de los que pagan con cheque electrónico un 45.29% abandona el servicio.
 
 ### EDA Multivariado
 
-
-####  MonthlyCharges vs PaymentMethod vs Churn
+#### MonthlyCharges vs PaymentMethod vs Churn
 
 **Gráfico 1**
 
@@ -328,8 +324,8 @@ A excepción de los que pagan con cheque electrónico los porcentajes de abandon
 ggplot(data, aes(x = PaymentMethod, y = MonthlyCharges, fill = Churn)) +
   geom_boxplot()
 ```
-**Interpretación**
 
+**Interpretación**
 
 **Gráfico 2**
 
@@ -340,15 +336,15 @@ ggplot(data, aes(x = Churn, y = MonthlyCharges, fill = PaymentMethod)) +
 
 **Interpretación**
 
-Los montos de pago de aquellos que abandonan el servicio son superiores a aquellos que permanecen con excepción de los que pagan por cheque electrónico. 
+Los montos de pago de aquellos que abandonan el servicio son superiores a aquellos que permanecen con excepción de los que pagan por cheque electrónico.
 
 ### Room 6
+
 ### Room 7
 
 ### Room 8
 
 #### Eda Bivariado entre churn y Dependents
-
 
 ```{r}
 data %>% tabyl(Churn, Dependents ) -> t1
@@ -367,10 +363,9 @@ data %>% count(Churn, Dependents) %>%
 
 ```
 
-De la muestra analizada alrededor del 27% corresponde a individuos que dejaron sus planes en el último mes. Además se conoce que el 4,6% de estos individuos contaban con personas dependientes.  
+De la muestra analizada alrededor del 27% corresponde a individuos que dejaron sus planes en el último mes. Además se conoce que el 4,6% de estos individuos contaban con personas dependientes.
 
 #### Eda Bivariado entre churn y OnlineSecurity
-
 
 ```{r}
 
@@ -391,10 +386,9 @@ data %>% count(Churn, OnlineSecurity) %>%
 
 ```
 
-El 20,74% de los indviduos analizados y que abandonaron el servicio no contaban con seguridad en línea. Por otro lado aquellos que no salieron del plan reflejaron una participación similar con relación al servicio de seguridad en línea. 
+El 20,74% de los indviduos analizados y que abandonaron el servicio no contaban con seguridad en línea. Por otro lado aquellos que no salieron del plan reflejaron una participación similar con relación al servicio de seguridad en línea.
 
-
-#### Eda Bivariado entre Churn y StreamingMovies  
+#### Eda Bivariado entre Churn y StreamingMovies
 
 ```{r}
 
@@ -414,7 +408,7 @@ data %>% count(Churn, StreamingMovies) %>%
 
 ```
 
-El 13,32% de los indviduos analizados y que abandonaron el servicio no contaban con servicio de Streaming Movies. Sin embargo, tanto para el grupo que abandonaron o mantuvieron el servicio no se evidencia una importancia relevante para su salidad del plan.  
+El 13,32% de los indviduos analizados y que abandonaron el servicio no contaban con servicio de Streaming Movies. Sin embargo, tanto para el grupo que abandonaron o mantuvieron el servicio no se evidencia una importancia relevante para su salidad del plan.
 
 #### Eda Bivariado entre churn y Total Charges
 
@@ -439,9 +433,7 @@ data %>%
 
 ```
 
-
-En promedio el gasto total en el servicio de telecomunicaciones para los individuos que salieron del plan es inferior por usuario en alrededor de USD 1000. Para los usuarios que salieron del servicio se evidencia datos atípicos elevados que alcanzan los valores máximos de los usarios que no salieron del servicio. Cabe señalar que, para los usuarios que no abandoron el servicio su extipendio total del plan se concentra entre el rango intercuartílico. Adicionalmente, se observa que la variable gasto total cuenta con 11 valores perdidos. 
-
+En promedio el gasto total en el servicio de telecomunicaciones para los individuos que salieron del plan es inferior por usuario en alrededor de USD 1000. Para los usuarios que salieron del servicio se evidencia datos atípicos elevados que alcanzan los valores máximos de los usarios que no salieron del servicio. Cabe señalar que, para los usuarios que no abandoron el servicio su extipendio total del plan se concentra entre el rango intercuartílico. Adicionalmente, se observa que la variable gasto total cuenta con 11 valores perdidos.
 
 #### Eda Multivariado entre MonthlyCharges vs Dependents vs Churn
 
@@ -462,15 +454,11 @@ data %>%
 
 ```
 
-La distribución del gasto mensual de aquellos individuos que no salieron del plan se concentra dentro del cuartil 1 y cuartil 3, además entre el máximo y mínimo de los que dejaron el servicio respecto de los que se quedaron no se verifica mayor diferencia. Es importante destacar que, tanto el promedio como la mediana del pago mensual es superior en los individuos que salieron del plan de los que se quedaron, no obstante no se verifica mayor diferencia respecto de contar o no con dependientes en los usuarios que abandonaron el plan. 
-
+La distribución del gasto mensual de aquellos individuos que no salieron del plan se concentra dentro del cuartil 1 y cuartil 3, además entre el máximo y mínimo de los que dejaron el servicio respecto de los que se quedaron no se verifica mayor diferencia. Es importante destacar que, tanto el promedio como la mediana del pago mensual es superior en los individuos que salieron del plan de los que se quedaron, no obstante no se verifica mayor diferencia respecto de contar o no con dependientes en los usuarios que abandonaron el plan.
 
 ### Room 9
+
 ### Room 10
-
-
-
-
 
 ### Matriz de Correlación
 
@@ -479,11 +467,12 @@ La distribución del gasto mensual de aquellos individuos que no salieron del pl
 data %>%  select_if(where(is.numeric)) %>% GGally::ggpairs()
 
 ```
+
 Según el gráfico anterior existe una alta correlación positiva entre las variables TotalChanges y tenure, con 0.826, seguida de la correlación entre las variables TotalChages y MonthyChanges, con una correlación moderada de 0.651.
 
-##MODELAMIENTO
+**MODELAMIENTO**
 
-###Train - Test Split
+### Train - Test Split
 
 ```{r}
 #data %>% select(-customerID) -> data
@@ -500,22 +489,23 @@ strata = Churn # Estratificación del muestreo
 
 ```
 
-###Data de entrenamiento
+### Data de entrenamiento
 
 ```{r}
 train <- training(split)
 dim(train)
 ```
 
-###Data de prueba (test)
+### Data de prueba (test)
 
 ```{r}
 test <- testing(split)
 dim(test)
 ```
-###Preprocesamiento
 
-####Receipe y Balanceo de datos
+### Preprocesamiento
+
+#### Receipe y Balanceo de datos
 
 ```{r}
 receta <- train %>%
@@ -549,7 +539,7 @@ themis::step_upsample(Churn, over_ratio = 0.9, skip= TRUE, seed= 123)
 
 ```
 
-####Entrenamiento y ajuste de Hiperparámetro
+#### Entrenamiento y ajuste de Hiperparámetro
 
 ```{r}
 
@@ -560,7 +550,7 @@ cv
 
 ```
 
-###Métricas
+### Métricas
 
 ```{r}
 metricas <- metric_set(accuracy, sens, spec, bal_accuracy)
@@ -568,9 +558,10 @@ metricas
 
 
 ```
-## Modelamiento - Random Forest
 
-###Especificacion del modelo
+**Modelamiento - Random Forest**
+
+*Especificacion del modelo*
 
 ```{r}
 rf_sp <-
@@ -581,7 +572,7 @@ rf_sp <-
 
 ```
 
-###Work Flow
+*Work Flow*
 
 ```{r}
 rf_wflow <-
@@ -592,7 +583,8 @@ rf_wflow <-
 
 
 ```
-###Afinamiento de Hiperpárametros
+
+*Afinamiento de Hiperpárametros*
 
 ```{r}
 set.seed(123)
@@ -614,40 +606,43 @@ grid_latin_hypercube(size = 10) #preguntar como se construye la malla
 
 ```
 
-###Entrenamiento de Malla de Busqueda en la Crossvalidation
+*Entrenamiento de Malla de Búsqueda en la Crossvalidation*
 
 ```{r}
 set.seed(123)
 rf_tuned <- tune_grid(
-rf_wflow, ## Modelo
-resamples= cv, ## Crossvalidation
-grid = rf_grid, ## Malla de Busqueda
-metrics = metricas, ## Metricas
-control= control_grid(allow_par = T, save_pred = T) ## Paralel y Pred
+        rf_wflow, ## Modelo
+        resamples= cv, ## Crossvalidation
+        grid = rf_grid, ## Malla de Busqueda
+        metrics = metricas, ## Metricas
+        control= control_grid(allow_par = T, save_pred = T) ## Paralel y Pred
 )
 rf_tuned
 
 ```
-###Evaluación de modelos
-Evaluamos que modelo resulto mejor
+
+*Evaluación de modelos Evaluamos que modelo resulto mejor*
 
 ```{r}
 show_best(rf_tuned, metric = 'accuracy', n = 10)
 ```
+
 ```{r}
 show_best(rf_tuned, metric = 'sens', n = 10)
 ```
+
 ```{r}
 show_best(rf_tuned, metric = 'spec', n = 10)
 
 ```
+
 ```{r}
 show_best(rf_tuned, metric = 'bal_accuracy', n = 10)
 ```
 
-Revisando los resultados de las métricas de evaluación del modelo y considerando que es de interés para le empresa contar con la mejor estimación de los individuos que realmente abandonan el servicio se selecciona como referencia los hiperpárametros del modelo número 6 que presenta los mejores resultados en sensibilidad, para ajustar el modelo final. 
+Revisando los resultados de las métricas de evaluación del modelo y considerando que es de interés para le empresa contar con la mejor estimación de los individuos que realmente abandonan el servicio se selecciona como referencia los hiperpárametros del modelo número 6 que presenta los mejores resultados en sensibilidad, para ajustar el modelo final.
 
-###Nueva Malla de Búsqueda
+*Nueva Malla de Búsqueda*
 
 ```{r}
 
@@ -663,7 +658,7 @@ rf_grid_2
 
 ```
 
-####Entrenamiento de Malla de Busqueda en la Crossvalidation
+*Entrenamiento de Malla de Busqueda en la Crossvalidation*
 
 ```{r}
 
@@ -678,6 +673,7 @@ rf_tuned_2 <- tune_grid(
 rf_tuned_2
 
 ```
+
 Evaluamos que modelo resulto mejor de la segunda grilla de hiperpárametros
 
 ```{r}
@@ -688,7 +684,6 @@ show_best(rf_tuned_2, metric = 'accuracy', n = 10)
 show_best(rf_tuned_2, metric = 'sens', n = 10)
 ```
 
-
 ```{r}
 show_best(rf_tuned_2, metric = 'spec', n = 10)
 ```
@@ -696,7 +691,8 @@ show_best(rf_tuned_2, metric = 'spec', n = 10)
 ```{r}
 show_best(rf_tuned_2, metric = 'bal_accuracy', n = 10)
 ```
-###Modelo final
+
+*Modelo final*
 
 ```{r}
 ## Definir la mejor combinacion
@@ -707,9 +703,10 @@ rf_wflow %>%
   finalize_workflow(rf_pars_fin)
 rf_wflow_fin
 ```
-###Entrenamiento del modelo
 
-Entrenar el modelo final 
+*Entrenamiento del modelo*
+
+Entrenar el modelo final
 
 ```{r}
 rf_fitted <- fit(rf_wflow_fin, train)
@@ -717,13 +714,14 @@ rf_fitted
 
 
 ```
-###Modelo sin workflow
+
+*Modelo sin workflow*
 
 ```{r}
 rf_model_fin <- extract_fit_parsnip(rf_fitted)
 ```
 
-###Evaluación del Modelo
+*Evaluación del Modelo*
 
 Evaluación en la data de entrenamiento
 
@@ -736,7 +734,8 @@ conf_mat(truth = Real, estimate = .pred_class ) %>%
 summary
 
 ```
-###Evaluación en la data de prueba
+
+*Evaluación en la data de prueba*
 
 ```{r}
 test %>%
@@ -745,20 +744,22 @@ mutate(Real= test$Churn) %>%
   conf_mat(truth = Real, estimate = .pred_class ) %>%
 summary
 ```
-###¿Que variables pueden estar relacionadas más con el abandono de clientes?
+
+*¿Que variables pueden estar relacionadas más con el abandono de clientes?*
+
 ```{r}
 library(vip)
 rf_model_fin %>%
   vip(geom = "point")
 ```
 
-# Modelo Boosting XGBoost
+**Modelo Boosting XGBoost**
 
-Como parte del ejercicio de selección del mejor modelo para la determinación de la mejor estrategia para retención de clientes, se utiliza el algoritmo XGboost con la finalidad de elegir el modelo con mayor poder predictivo. 
+Como parte del ejercicio de selección del mejor modelo para la determinación de la mejor estrategia para retención de clientes, se utiliza el algoritmo XGboost con la finalidad de elegir el modelo con mayor poder predictivo.
 
-Para tal efecto, la aplicación del algoritmo XGboost inicia a partir de la receta establecida para los datos de abandono de clientes del servicio de telecomunicaciones. 
+Para tal efecto, la aplicación del algoritmo XGboost inicia a partir de la receta establecida para los datos de abandono de clientes del servicio de telecomunicaciones.
 
-###Especificación del modelo 
+*Especificación del modelo*
 
 ```{r}
 
@@ -774,7 +775,7 @@ xgb_sp %>%
 
 ```
 
-###Afinamiento de Malla de búsqueda
+*Afinamiento de Malla de búsqueda*
 
 Previo a establecer la malla de búsqueda el algoritmo requiere la data incorporada las funciones establecidas en la receta, por tal motivo se aplica prep y bake. Posteriormente, se obtiene la malla de búsqueda
 
@@ -794,7 +795,7 @@ xgb_grid
 
 ```
 
-###Work Flow
+*Work Flow*
 
 ```{r}
 
@@ -806,7 +807,7 @@ xgb_wflow <-
 xgb_wflow
 ```
 
-###Entrenamiento de Malla de Busqueda en la Crossvalidation  - Xgboost
+*Entrenamiento de Malla de Busqueda en la Crossvalidation - Xgboost*
 
 ```{r}
 
@@ -825,7 +826,7 @@ xgb_tuned
 
 ```
 
-###Mejor modelo
+*Mejor modelo*
 
 Evaluamos que modelo resulto mejor
 
@@ -847,9 +848,10 @@ show_best(xgb_tuned, metric = 'spec', n = 10)
 ```{r}
 show_best(xgb_tuned, metric = 'bal_accuracy', n = 10)
 ```
-###Selección del modelo final
 
-La selección de los hipepáramestros es con base al mejor modelo de sensibilidad y "bal_accuracy", por tanto se el modelo final resulta ser el modelo 04, no se realizá un proceso búsqueda manual del mejor modelo debido a la amplitud de valores que puede tomar el learn_rate y la función de costo, así como la discrecionalidad de la amplitud de búsqueda. 
+*Selección del modelo final*
+
+La selección de los hipepáramestros es con base al mejor modelo de sensibilidad y "bal_accuracy", por tanto se el modelo final resulta ser el modelo 04, no se realizá un proceso búsqueda manual del mejor modelo debido a la amplitud de valores que puede tomar el learn_rate y la función de costo, así como la discrecionalidad de la amplitud de búsqueda.
 
 ```{r}
 xgb_pars_fin <- select_best(xgb_tuned, metric = 'sens')
@@ -861,14 +863,14 @@ xgb_wflow_fin
 
 ```
 
-###Entrenar el modelo final
+*Entrenar el modelo final*
 
 ```{r}
 xgb_fitted <- fit(xgb_wflow_fin, train)
 xgb_fitted
 ```
 
-###Selección del modelo
+*Selección del modelo*
 
 ```{r}
 
@@ -876,7 +878,8 @@ xgb_model_fin <- pull_workflow_fit(xgb_fitted)
 xgb_model_fin
 
 ```
-###Evaluación del modelo en la data de entrenamiento y prueba
+
+*Evaluación del modelo en la data de entrenamiento y prueba*
 
 ```{r}
 train %>%
@@ -888,7 +891,6 @@ train %>%
 
 ```
 
-
 ```{r}
 
 test %>%
@@ -898,7 +900,8 @@ test %>%
   summary
 
 ```
-###Importancia de las variables en el modelo
+
+*Importancia de las variables en el modelo*
 
 ```{r}
 
@@ -906,8 +909,8 @@ vip(xgb_model_fin)
 
 ```
 
-Analizando la importancia de las variables en el modelo se verifica que el gasto mensual y total presentan una alta importancia en las variables sin embargo el gasto total es una combinación lineal del gasto mensual, por lo que se podría excluir del modelo una de las variabales para probar si incrementa su capacidad de predicción con respecto a sensibilidad y bal_accuracy. 
+Analizando la importancia de las variables en el modelo se verifica que el gasto mensual y total presentan una alta importancia en las variables sin embargo el gasto total es una combinación lineal del gasto mensual, por lo que se podría excluir del modelo una de las variabales para probar si incrementa su capacidad de predicción con respecto a sensibilidad y bal_accuracy.
 
-###Conclusión
+### Conclusión
 
-Del análisis realizado se evidencia que ambos modelos (Random Forest y Xgboost ) presentan muy buena estimación con relación a sensibilidad, es decir con la capacidad de predicción de los individuos que abandonan el servicio, no obstante Xgboost presenta un resultado superior en el test de prueba (0.74 > 0.72), por tanto el modelo seleccionado es Xgboost.  
+Del análisis realizado se evidencia que ambos modelos (Random Forest y Xgboost ) presentan muy buena estimación con relación a sensibilidad, es decir con la capacidad de predicción de los individuos que abandonan el servicio, no obstante Xgboost presenta un resultado superior en el test de prueba (0.74 \> 0.72), por tanto el modelo seleccionado es Xgboost.
