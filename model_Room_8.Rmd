@@ -110,7 +110,20 @@ data %>%
       Valor= quantile( TotalCharges, c(0, 0.2, 0.25, 0.50 ,0.75, 0.98, 1), na.rm= T)
     )
     )
+
+#Media por Partner
+data %>% 
+        group_by(Partner) %>% 
+        summarise(media=mean(TotalCharges,
+                          na.rm =T ))
+#Distribuciòn de TotalCharges por Partner
+data %>% 
+        ggplot(aes(TotalCharges,
+                   color=Partner))+
+        geom_density()+
+        scale_y_continuous(labels = scales::number_format())
 ```
+Existe una diferencia importante en los registros de dinero cobrado a los clientes al considerar aquellos que tienen pareja. Al revisar el gráfico anterior, se evidencia que las personas que informaron tener pareja son las que presentan los cobros más altos. Esto se refleja en la distribución, donde se observa una densidad mayor para valores altos en comparación con las personas que declararon no tener pareja.
 
 ### Balanceo de datos
 
@@ -141,10 +154,7 @@ theme_bw()
 
 El porcentaje de clientes que abandonan el servicio de telecomunicaciones es aproximadamente 3 a 1 en el muestra de análisis. 
 
-## EDA Multivariado
-=======
-
-## EDA Bivariado
+# EDA Bivariado
 
 ### Room 2
 
@@ -438,12 +448,12 @@ La distribución del gasto mensual de aquellos individuos que no salieron del pl
 ### Room 10
 
 
-## EDA Multivariado
+# EDA Multivariado
 
 
-### Room 4
+## Room 4
 
-####  MonthlyCharges vs PaymentMethod vs Churn
+###  MonthlyCharges vs PaymentMethod vs Churn
 
 **Gráfico 1**
 
@@ -466,16 +476,16 @@ ggplot(data, aes(x = Churn, y = MonthlyCharges, fill = PaymentMethod)) +
 Los montos de pago de aquellos que abandonan el servicio son superiores a aquellos que permanecen con excepción de los que pagan por cheque electrónico. 
 
 
-##Matriz de Correlación
+## Matriz de Correlación
 
 ```{r}
 #data %>%  select(-customerID) %>% GGally::ggpairs()
 data %>%  select_if(where(is.numeric)) %>% GGally::ggpairs()
 
 ```
+Según el gráfico anterior existe una alta correlación positiva entre las variables TotalChanges y tenure, con 0.826, seguida de la correlación entre las variables TotalChages y MonthyChanges, con una correlación moderada de 0.651.
 
-
-## Modelamiento - Random Forest
+# Modelamiento - Random Forest
 
 **Train - Test Split**
 
@@ -742,7 +752,7 @@ rf_model_fin %>%
   vip(geom = "point")
 ```
 
-**Modelo Boosting XGBoost**
+# Modelo Boosting XGBoost
 
 Como parte del ejercicio de selección del mejor modelo para la determinación de la mejor estrategia para retención de clientes, se utiliza el algoritmo XGboost con la finalidad de elegir el modelo con mayor poder predictivo. 
 
