@@ -1,8 +1,9 @@
 check:
 	-isort .
 	-black .
-	-ruff . --fix
-	-mypy .
+	-ruff check . --fix
+	-ruff format .
+	-mypy --pretty .
 update:
 	poetry update
 	pre-commit autoupdate

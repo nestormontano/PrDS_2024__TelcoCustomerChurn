@@ -1,5 +1,4 @@
 # PrDS_2024__TelcoCustomerChurn
-Repositorio del proyecto de predicción del problema Telco Customer Churn (kaggle)
 
 <!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
 <a name="readme-top"></a>

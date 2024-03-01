@@ -1,3 +1,0 @@
-"""
-Package core initialization.
-"""
