@@ -8,7 +8,7 @@ def main() -> None:
     :return: None
     :rtype: NoneType
     """
-    print("Running the malware analysis project")
+    print("Running the telco customer churn project")
 
 
 if __name__ == "__main__":
