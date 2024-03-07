@@ -73,7 +73,7 @@ imbalanced-learn = "^0.12.0"
 pygam = "^0.9.1"
 ipython = "^8.22.2"
 jupyter = "^1.0.0"
-jupyterlab = "^4.1.3"
+jupyterlab = "^4.1.4"
 
 
 [build-system]
