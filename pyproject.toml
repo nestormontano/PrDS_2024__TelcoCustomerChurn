@@ -60,7 +60,7 @@ packages = [{include = "prds_2024_telcocustomerchurn"}]
 python = ">=3.11,<3.13"
 isort = "^5.13.2"
 black = {extras = ["jupyter"], version = "^24.2.0"}
-ruff = "^0.3.0"
+ruff = "^0.3.1"
 mypy = "^1.8.0"
 pre-commit = "^3.6.2"
 numpy = "^1.26.4"
