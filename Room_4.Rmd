@@ -1,0 +1,721 @@
+---
+title: "Predicción de Churn usando Random Forest y GBM en R"
+author: 
+    - Victor Ponce
+    - Oswaldo Navarrete
+output: html_document
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(magrittr)
+library(tidymodels)
+library(skimr)
+library(ranger)
+library(parallel)
+library(doParallel)
+library(corrplot)
+library(vip)
+library(caret)       
+library(DataExplorer)
+library(gbm) 
+library(ROCR)
+```
+
+## Preliminares
+
+### Importar datos
+
+```{r}
+data <- read_csv("Data/WA_Fn-UseC_-Telco-Customer-Churn.csv")
+
+data %>% glimpse
+```
+
+#### Corregir tipos de datos 
+
+```{r}
+data %>%
+        mutate( 
+                Churn = factor(Churn,
+                               levels= c("Yes","No"),
+                               labels= c("Si", "No"))
+                ) -> data
+```
+
+### EDA Univariado
+
+```{r}
+skim(data)
+```
+
+### Balanceo
+
+```{r}
+data %>%
+        group_by( Churn) %>%
+        count( name = 'frec') %>%
+        ungroup() %>%
+        mutate( Porc= frec/sum(frec))
+```
+
+```{r}
+data %>%
+        group_by( Churn) %>%
+        count( name = 'frec') %>%
+        ungroup() %>%
+        mutate( Porc= frec/sum(frec)) %>%
+        ggplot( aes(x= Churn, y= Porc)) +
+        geom_segment( aes(xend= Churn, y=0, yend=Porc),
+                      color= "steelblue", linewidth= 1) +
+        geom_point( size=5, color= "steelblue") +
+        coord_flip() +
+        scale_y_continuous( labels = percent_format()) +
+        labs(title= 'Porcentaje de Clientes que Abandonan',
+             y= "Porcentaje", x= "Churn") +
+        theme_bw()
+```
+
+### EDA Multivariado
+
+```{r}
+data %>%
+        select_if( is.numeric) %>%
+        GGally::ggscatmat()
+```
+
+## Random Forest
+
+### Modelamiento 
+
+#### Train-Test split
+
+```{r}
+set.seed(1234) # Semilla para aleatorios
+split <- data %>%
+        initial_split(
+                prop = 0.8, 
+                strata = Churn 
+        )
+```
+
+```{r}
+train <- training(split)
+dim(train)
+
+test <- testing(split)
+dim(test)
+```
+#### Preprocesamiento
+
+##### Balancear usando pesos
+
+```{r}
+train %>%
+  mutate(
+    ## crear la variable con los pesos
+    case_wts = ifelse(Churn == "1", 3, 1),
+    ## crea el vector de importancia ponderada
+    case_wts = importance_weights(case_wts)
+  ) -> train
+```
+
+##### Receta de preprocesamiento
+
+```{r}
+receta <- train %>%
+  recipe(Churn ~ . ) %>% ## Crea la receta
+  step_rm(TotalCharges) %>%
+  step_impute_knn( all_predictors() ) %>%
+  step_normalize( all_numeric(), -all_outcomes()) %>%
+        step_other(all_nominal(), -all_outcomes() , threshold = 0.07, other = "otros") %>%
+        step_novel(all_nominal(), -all_outcomes() , new_level = "new") %>%
+        step_dummy(all_nominal(), -all_outcomes() ) %>%
+        step_corr(all_numeric(), -all_outcomes(), threshold = 0.8) %>%
+        step_nzv(all_predictors())
+
+receta  
+
+```
+
+
+#### Entrenamiento y ajuste de hiperparámetros
+
+
+##### Remuestreo
+```{r}
+set.seed(1234)
+cv <- vfold_cv(train, v = 5, repeats = 2, strata = Churn)
+cv
+```
+
+##### Métricas
+
+```{r}
+metricas <- metric_set(accuracy, sens, spec, bal_accuracy)
+metricas
+```
+
+#### Especificación del modelo
+
+```{r}
+rf_sp <-
+        rand_forest(
+                mtry = tune(), trees = tune(), min_n = tune() ) %>%
+        set_engine("ranger", importance = "impurity") %>%
+        set_mode("classification")
+
+```
+
+#### Workflow
+
+```{r}
+rf_wflow <-
+  workflow() %>%
+  add_recipe(receta) %>%
+  add_model(rf_sp) %>%
+  add_case_weights(case_wts) 
+rf_wflow
+```
+
+#### Afinamiento de hiperparámetros
+
+##### Malla de búsqueda
+
+```{r}
+set.seed(123)
+rf_grid <- rf_sp %>%
+  extract_parameter_set_dials() %>%
+  update(min_n= min_n( range= c(70, 170)),
+         mtry= mtry( range= c(4, 7))) %>%
+  grid_latin_hypercube(size = 10)
+```
+
+#### Paralelización
+
+```{r}
+parallel::detectCores(logical=FALSE)
+
+cl <- makePSOCKcluster(4)
+registerDoParallel(cl) 
+```
+
+
+#### Entremamiento de malla de búsqueda en la validación cruzada
+
+```{r}
+set.seed(123)
+rf_tuned <- tune_grid(
+  rf_wflow, ## Modelo
+  resamples= cv, ## Crossvalidation
+  grid = rf_grid, ## Malla de Busqueda
+  metrics = metricas, ## Metricas
+  control= control_grid(allow_par = T, save_pred = T) ## Paralel y Pred
+)
+rf_tuned
+```
+
+#### Evaluación de cada combinación según las métricas
+
+```{r}
+show_best(rf_tuned, metric = 'accuracy', n = 10)
+show_best(rf_tuned, metric = 'sens', n = 10)
+show_best(rf_tuned, metric = 'spec', n = 10)
+show_best(rf_tuned, metric = 'bal_accuracy', n = 10)
+```
+
+#### Malla de búsqueda
+
+```{r}
+set.seed(123)
+rf_grid_2 <- crossing(
+  min_n = seq(80, 91, 3),
+  mtry = c(5, 7),
+  trees= seq(500, 800, 100)
+)
+rf_grid_2
+```
+
+#### Entrenamiento de malla de búsqueda en la validación cruzada
+
+```{r}
+set.seed(123)
+rf_tuned_2 <- tune_grid(
+  rf_wflow, ## Modelo
+  resamples= cv, ## Crossvalidation
+  grid = rf_grid_2, ## Malla de Busqueda
+  metrics = metricas, ## Metricas
+  control= control_grid(allow_par = T, save_pred = T) ## Paralel y Pred
+)
+rf_tuned_2
+```
+
+#### Evaluación de cada modelo según las métricas
+
+```{r}
+show_best(rf_tuned_2, metric = 'accuracy', n = 10)
+show_best(rf_tuned_2, metric = 'sens', n = 10)
+show_best(rf_tuned_2, metric = 'spec', n = 10)
+show_best(rf_tuned_2, metric = 'bal_accuracy', n = 10)
+```
+
+#### Modelo final
+
+```{r}
+rf_pars_fin <- select_best(rf_tuned_2, metric = 'sens')
+
+rf_wflow_fin <-
+  rf_wflow %>%
+  finalize_workflow(rf_pars_fin)
+
+rf_wflow_fin
+
+```
+
+#### Entrenamiento del modelo final
+
+```{r}
+rf_fitted <- fit(rf_wflow_fin, train)
+rf_fitted
+```
+
+```{r}
+rf_model_fin <- extract_fit_parsnip(rf_fitted)
+```
+
+#### Evaluación del modelo
+
+```{r}
+train %>%
+  predict(rf_fitted , new_data = . ) %>%
+  mutate(Real= train$Churn) %>%
+  conf_mat(truth = Real, estimate = .pred_class ) %>%
+  summary
+
+test %>%
+  predict(rf_fitted, new_data = . ) %>%
+  mutate(Real= test$Churn) %>%
+  conf_mat(truth = Real, estimate = .pred_class ) %>%
+  summary
+```
+
+#### Finalizar paralelización
+
+```{r}
+parallel::stopCluster(cl)
+```
+
+### Análisis posteriores
+
+#### Importancia de las variables
+
+```{r}
+rf_model_fin %>%
+  vip(geom = "point")
+```
+
+## GBM
+
+```{r include=FALSE}
+options(scipen=999)
+data <- read_csv("Data/WA_Fn-UseC_-Telco-Customer-Churn.csv")
+data <- mutate_if(data, is.character, as.factor) 
+data$SeniorCitizen <- as.factor(data$SeniorCitizen)
+data <- select(data,-customerID)
+```
+
+### Modelización
+
+#### Train-Test Split
+
+```{r}
+set.seed(123) 
+partition <- createDataPartition(y = data$Churn, p = 0.7, list = FALSE)
+train <- data[partition,]
+test <- data[-partition,]
+
+table(train$Churn)
+table(test$Churn)
+
+train$Churn <- ifelse(train$Churn == "Yes", 1, 0)
+```
+
+#### Primer modelo
+
+```{r}
+set.seed(1)
+gbm <- gbm(formula = Churn ~ .,
+           distribution = "bernoulli",
+           data = train,
+           n.trees = 5000)
+
+print(gbm)
+
+summary(gbm)
+```
+
+Conforme los resultados se podría eliminar la variable Dependents, Partner y quizás todas las menores a "0". Pero para efectos del ejercicio mantenemos todas las variables
+
+##### Prediccion
+
+```{r}
+test$Churn <- ifelse(test$Churn == "Yes", 1, 0)
+
+gbm_score <- predict(object = gbm, 
+                     newdata = test,
+                     n.trees = 5000,
+                     type = "response")
+
+head(gbm_score)
+```
+
+Interpretación:  el sujeto 1 tendrá una probabilidad de clasificarse como 1 (Yes) del 3,31%. El segundo de 34.13%, etc.
+
+##### Curva ROC
+
+```{r}
+pred_gbm <- prediction(gbm_score, test$Churn)
+perf_gbm <- performance(pred_gbm,"tpr","fpr")
+
+plot(perf_gbm, lwd=2, colorize=TRUE, main="ROC: GBM Performance")
+lines(x=c(0, 1), y=c(0, 1), col="red", lwd=1, lty=3);
+lines(x=c(1, 0), y=c(0, 1), col="green", lwd=1, lty=4)
+
+```
+
+##### Umbrales y matriz de decisión
+
+```{r}
+score2 <- ifelse(gbm_score > 0.20, "Sí", "No")
+MC <- table(test$Churn, score2)
+Acc2 <- (MC[1,1] + MC[2,2]) / sum(MC) *100
+Sen2 <- MC[2,2] / (MC[2,2] + MC[1,2]) *100
+Pr2 <- MC[2,2] / (MC[2,2] + MC[2,1]) *100
+F12 <- 2*Pr2*Sen2/(Pr2+Sen2)
+
+score3 <- ifelse(gbm_score > 0.30, "Sí", "No")
+MC <- table(test$Churn, score3)
+Acc3 <- (MC[1,1] + MC[2,2]) / sum(MC) *100
+Sen3 <- MC[2,2] / (MC[2,2] + MC[1,2]) *100
+Pr3 <- MC[2,2] / (MC[2,2] + MC[2,1]) *100
+F13 <- 2*Pr3*Sen3/(Pr3+Sen3)
+
+score4 <- ifelse(gbm_score > 0.40, "Sí", "No")
+MC <- table(test$Churn, score4)
+Acc4 <- (MC[1,1] + MC[2,2]) / sum(MC) *100
+Sen4 <- MC[2,2] / (MC[2,2] + MC[1,2]) *100
+Pr4 <- MC[2,2] / (MC[2,2] + MC[2,1]) *100
+F14 <- 2*Pr4*Sen4/(Pr4+Sen4)
+
+score5 <- ifelse(gbm_score > 0.50, "Sí", "No")
+MC <- table(test$Churn, score5)
+Acc5 <- (MC[1,1] + MC[2,2]) / sum(MC) *100
+Sen5 <- MC[2,2] / (MC[2,2] + MC[1,2]) *100
+Pr5 <- MC[2,2] / (MC[2,2] + MC[2,1]) *100
+F15 <- 2*Pr5*Sen5/(Pr5+Sen5)
+
+score6 <- ifelse(gbm_score > 0.60, "Sí", "No")
+MC <- table(test$Churn, score6)
+Acc6 <- (MC[1,1] + MC[2,2]) / sum(MC) *100
+Sen6 <- MC[2,2] / (MC[2,2] + MC[1,2]) *100
+Pr6 <- MC[2,2] / (MC[2,2] + MC[2,1]) *100
+F16 <- 2*Pr6*Sen6/(Pr6+Sen6)
+
+
+
+salida<-c(Sen2,Sen3,Sen4,Sen5,Sen6)
+salida
+
+salida<-c(F12,F13,F14,F15,F16)
+salida
+
+```
+
+##### Metricas definitivas
+
+```{r}
+score3 <- ifelse(gbm_score > 0.30, "Yes", "No")
+MC <- table(test$Churn, score3)
+gbm1_Acc <- round((MC[1,1] + MC[2,2]) / sum(MC) *100, 2)
+gbm1_Sen <- round(MC[2,2] / (MC[2,2] + MC[1,2]) *100, 2)
+gbm1_Pr <- round(MC[2,2] / (MC[2,2] + MC[2,1]) *100, 2)
+gbm1_F1 <- round(2*gbm1_Pr*gbm1_Sen/(gbm1_Pr+gbm1_Sen), 2)
+
+
+gbm1_KS <- round(max(attr(perf_gbm,'y.values')[[1]]-attr(perf_gbm,'x.values')[[1]])*100, 2)
+gbm1_AUROC <- round(performance(pred_gbm, measure = "auc")@y.values[[1]]*100, 2)
+
+#Métricas finales del modelo
+cat("Acierto_gbm: ", gbm1_Acc,"\tSensibilidad_gbm: ", gbm1_Sen, "\tPrecision_gbm:", gbm1_Pr, "\tF1-gbm:", gbm1_F1, "\tAUROC_gbm: ",gbm1_AUROC,"\tKS_gbm: ", gbm1_KS, "\n")
+
+
+
+```
+
+Se obtiene una AUC de 84.06, lo que indica un modelo aceptable . la sensibilidad es igual a 53.76.
+
+#### Modelización con GBM y método OOB (tuning model)
+
+##### Modelo
+
+```{r}
+set.seed(1)
+gbm2 <- gbm(Churn ~ ., 
+            distribution = "bernoulli", 
+            data = train,
+            n.trees = 10000,
+            cv.folds = 2,
+            n.cores = 1)
+```
+
+##### Número óptimo de árboles
+
+```{r}
+ntree_opt_oob <- gbm.perf(object = gbm2, 
+                          method = "OOB", 
+                          oobag.curve = TRUE)
+
+
+print(paste0("Optimal n.trees (OOB Estimate): ", ntree_opt_oob))
+```
+
+##### Predicciones
+
+```{r}
+gbm_score_oob <- predict(object = gbm2, 
+                         newdata = test,
+                         n.trees = ntree_opt_oob)
+
+head(gbm_score_oob)
+
+```
+
+##### Curvas ROC
+
+```{r}
+pred_gbm_oob <- prediction(gbm_score_oob, test$Churn)
+perf_gbm_oob <- performance(pred_gbm_oob,"tpr","fpr")
+#library(ROCR)
+plot(perf_gbm_oob, lwd=2, colorize=TRUE, main="ROC: GBM OOB Performance")
+lines(x=c(0, 1), y=c(0, 1), col="red", lwd=1, lty=3);
+lines(x=c(1, 0), y=c(0, 1), col="green", lwd=1, lty=4)
+```
+
+##### Umbrales y matriz de confusión
+
+```{r}
+score2 <- ifelse(gbm_score_oob > 0.20, "Yes", "No")
+MC <- table(test$Churn, score2)
+Acc2 <- (MC[1,1] + MC[2,2]) / sum(MC) *100
+Sen2 <- MC[2,2] / (MC[2,2] + MC[1,2]) *100
+Pr2 <- MC[2,2] / (MC[2,2] + MC[2,1]) *100
+F12 <- 2*Pr2*Sen2/(Pr2+Sen2)
+
+score3 <- ifelse(gbm_score_oob > 0.30, "Yes", "No")
+MC <- table(test$Churn, score3)
+Acc3 <- (MC[1,1] + MC[2,2]) / sum(MC) *100
+Sen3 <- MC[2,2] / (MC[2,2] + MC[1,2]) *100
+Pr3 <- MC[2,2] / (MC[2,2] + MC[2,1]) *100
+F13 <- 2*Pr3*Sen3/(Pr3+Sen3)
+
+score4 <- ifelse(gbm_score_oob > 0.40, "Yes", "No")
+MC <- table(test$Churn, score4)
+Acc4 <- (MC[1,1] + MC[2,2]) / sum(MC) *100
+Sen4 <- MC[2,2] / (MC[2,2] + MC[1,2]) *100
+Pr4 <- MC[2,2] / (MC[2,2] + MC[2,1]) *100
+F14 <- 2*Pr4*Sen4/(Pr4+Sen4)
+
+score5 <- ifelse(gbm_score_oob > 0.50, "Yes", "No")
+MC <- table(test$Churn, score5)
+Acc5 <- (MC[1,1] + MC[2,2]) / sum(MC) *100
+Sen5 <- MC[2,2] / (MC[2,2] + MC[1,2]) *100
+Pr5 <- MC[2,2] / (MC[2,2] + MC[2,1]) *100
+F15 <- 2*Pr5*Sen5/(Pr5+Sen5)
+
+score6 <- ifelse(gbm_score_oob > 0.60, "Yes", "No")
+MC <- table(test$Churn, score6)
+Acc6 <- (MC[1,1] + MC[2,2]) / sum(MC) *100
+Sen6 <- MC[2,2] / (MC[2,2] + MC[1,2]) *100
+Pr6 <- MC[2,2] / (MC[2,2] + MC[2,1]) *100
+F16 <- 2*Pr6*Sen6/(Pr6+Sen6)
+
+#salida<-c(Acc2,Acc3,Acc4,Acc5,Acc6)
+#salida
+salida<-c(Sen2,Sen3,Sen4,Sen5,Sen6)
+salida
+#salida<-c(Pr2,Pr3,Pr4,Pr5,Pr6)
+#salida
+salida<-c(F12,F13,F14,F15,F16)
+salida
+
+```
+
+##### Métricas definitivas
+
+```{r}
+score3 <- ifelse(gbm_score_oob > 0.30, "Yes", "No")
+MC <- table(test$Churn, score3)
+gbm_oob_Acc <- round((MC[1,1] + MC[2,2]) / sum(MC) *100, 2)
+gbm_oob_Sen <- round(MC[2,2] / (MC[2,2] + MC[1,2]) *100, 2)
+gbm_oob_Pr <- round(MC[2,2] / (MC[2,2] + MC[2,1]) *100, 2)
+gbm_oob_F1 <- round(2*gbm_oob_Pr*gbm_oob_Sen/(gbm_oob_Pr+gbm_oob_Sen), 2)
+
+#KS & AUC
+gbm_oob_KS <- round(max(attr(perf_gbm_oob,'y.values')[[1]]-attr(perf_gbm_oob,'x.values')[[1]])*100, 2)
+gbm_oob_AUROC <- round(performance(pred_gbm_oob, measure = "auc")@y.values[[1]]*100, 2)
+
+
+cat("Acierto_gbm_oob: ", gbm_oob_Acc,"\tSensibilidad_gbm_oob: ", gbm_oob_Sen, "\tPrecision_gbm_oob:", gbm_oob_Pr, "\tF1_gbm_oob:", gbm_oob_F1, "\tAUROC_gbm_oob: ",gbm_oob_AUROC,"\tKS_gbm_oob: ", gbm_oob_KS, "\n")
+
+```
+
+#### Modelización con GBM y CV
+
+##### Modelo
+
+Se usa el modelo gbm2
+
+##### Número óptimo de árboles
+
+```{r}
+ntree_opt_cv <- gbm.perf(object = gbm2, 
+                         method = "cv")
+print(paste0("Optimal n.trees (CV Estimate): ", ntree_opt_cv))
+
+```
+
+##### Predicciones
+
+```{r}
+gbm_score_cv <- predict(object = gbm2, 
+                        newdata = test,
+                        n.trees = ntree_opt_cv)
+
+head(gbm_score_cv)
+```
+
+##### Curva ROC
+
+```{r}
+pred_gbm_cv <- prediction(gbm_score_cv, test$Churn)
+perf_gbm_cv <- performance(pred_gbm_cv,"tpr","fpr")
+#library(ROCR)
+plot(perf_gbm_cv, lwd=2, colorize=TRUE, main="ROC: GBM CV Performance")
+lines(x=c(0, 1), y=c(0, 1), col="red", lwd=1, lty=3);
+lines(x=c(1, 0), y=c(0, 1), col="green", lwd=1, lty=4)
+```
+
+##### Umbrales y matriz de confusión
+
+```{r}
+pred_gbm_cv <- prediction(gbm_score_cv, test$Churn)
+perf_gbm_cv <- performance(pred_gbm_cv,"tpr","fpr")
+#library(ROCR)
+plot(perf_gbm_cv, lwd=2, colorize=TRUE, main="ROC: GBM CV Performance")
+lines(x=c(0, 1), y=c(0, 1), col="red", lwd=1, lty=3);
+lines(x=c(1, 0), y=c(0, 1), col="green", lwd=1, lty=4)
+```
+
+##### Umbrales y matriz de confusión
+
+```{r}
+score2 <- ifelse(gbm_score_cv > 0.20, "Yes", "No")
+MC <- table(test$Churn, score2)
+Acc2 <- (MC[1,1] + MC[2,2]) / sum(MC) *100
+Sen2 <- MC[2,2] / (MC[2,2] + MC[1,2]) *100
+Pr2 <- MC[2,2] / (MC[2,2] + MC[2,1]) *100
+F12 <- 2*Pr2*Sen2/(Pr2+Sen2)
+
+score3 <- ifelse(gbm_score_cv > 0.30, "Yes", "No")
+MC <- table(test$Churn, score3)
+Acc3 <- (MC[1,1] + MC[2,2]) / sum(MC) *100
+Sen3 <- MC[2,2] / (MC[2,2] + MC[1,2]) *100
+Pr3 <- MC[2,2] / (MC[2,2] + MC[2,1]) *100
+F13 <- 2*Pr3*Sen3/(Pr3+Sen3)
+
+score4 <- ifelse(gbm_score_cv > 0.40, "Yes", "No")
+MC <- table(test$Churn, score4)
+Acc4 <- (MC[1,1] + MC[2,2]) / sum(MC) *100
+Sen4 <- MC[2,2] / (MC[2,2] + MC[1,2]) *100
+Pr4 <- MC[2,2] / (MC[2,2] + MC[2,1]) *100
+F14 <- 2*Pr4*Sen4/(Pr4+Sen4)
+
+score5 <- ifelse(gbm_score_cv > 0.50, "Yes", "No")
+MC <- table(test$Churn, score5)
+Acc5 <- (MC[1,1] + MC[2,2]) / sum(MC) *100
+Sen5 <- MC[2,2] / (MC[2,2] + MC[1,2]) *100
+Pr5 <- MC[2,2] / (MC[2,2] + MC[2,1]) *100
+F15 <- 2*Pr5*Sen5/(Pr5+Sen5)
+
+score6 <- ifelse(gbm_score_cv > 0.60, "Yes", "No")
+MC <- table(test$Churn, score6)
+Acc6 <- (MC[1,1] + MC[2,2]) / sum(MC) *100
+Sen6 <- MC[2,2] / (MC[2,2] + MC[1,2]) *100
+Pr6 <- MC[2,2] / (MC[2,2] + MC[2,1]) *100
+F16 <- 2*Pr6*Sen6/(Pr6+Sen6)
+
+
+#salida<-c(Acc2,Acc3,Acc4,Acc5,Acc6)
+#salida
+salida<-c(Sen2,Sen3,Sen4,Sen5,Sen6)
+salida
+#salida<-c(Pr2,Pr3,Pr4,Pr5,Pr6)
+#salida
+salida<-c(F12,F13,F14,F15,F16)
+salida
+
+```
+
+##### Métricas definitivas
+
+```{r}
+score2 <- ifelse(gbm_score_cv > 0.20, "Yes", "No")
+MC <- table(test$Churn, score2)
+gbm_cv_Acc <- round((MC[1,1] + MC[2,2]) / sum(MC) *100, 2)
+gbm_cv_Sen <- round(MC[2,2] / (MC[2,2] + MC[1,2]) *100, 2)
+gbm_cv_Pr <- round(MC[2,2] / (MC[2,2] + MC[2,1]) *100, 2)
+gbm_cv_F1 <- round(2*gbm_cv_Pr*gbm_cv_Sen/(gbm_cv_Pr+gbm_cv_Sen), 2)
+
+#KS & AUC
+gbm_cv_KS <- round(max(attr(perf_gbm_cv,'y.values')[[1]]-attr(perf_gbm_cv,'x.values')[[1]])*100, 2)
+gbm_cv_AUROC <- round(performance(pred_gbm_cv, measure = "auc")@y.values[[1]]*100, 2)
+
+#Métricas finales del modelo
+cat("Acierto_gbm_cv: ", gbm_cv_Acc,"\tSensibilidad_gbm_cv: ", gbm_cv_Sen, "\tPrecision_gbm_cv:", gbm_cv_Pr, "\tF1-gbm_cv:", gbm_cv_F1, "\tAUROC_gbm_cv: ",gbm_cv_AUROC,"\tKS_gbm_cv: ", gbm_cv_KS, "\n")
+
+```
+
+
+### Comparación de los 3 modelos
+
+```{r echo=FALSE}
+models <- c('GBM', 'GBM oob', 'GBM cv')
+
+#Accuracy
+models_Acc <- c(gbm1_Acc, gbm_oob_Acc, gbm_cv_Acc)
+
+#Sensibilidad
+models_Sen <- c(gbm1_Sen, gbm_oob_Sen, gbm_cv_Sen)
+
+#Precisión
+models_Pr <- c(gbm1_Pr, gbm_oob_Pr, gbm_cv_Pr)
+
+#F1
+models_F1 <- c(gbm1_F1, gbm_oob_F1, gbm_cv_F1)
+
+# AUC
+models_AUC <- c(gbm1_AUROC, gbm_oob_AUROC, gbm_cv_AUROC)
+
+# KS
+models_KS <- c(gbm1_KS, gbm_oob_KS, gbm_cv_KS)
+# Combinar métricas
+metricas <- as.data.frame(cbind(models, models_Acc, models_Sen, models_Pr, models_F1, models_AUC, models_KS))
+# Colnames 
+colnames(metricas) <- c("Model", "Acc", "Sen", "Pr", "F1", "AUC", "KS")
+# Tabla final de métricas
+knitr::kable(metricas, caption ="Comparision of Model Performances")
+
+```
+
