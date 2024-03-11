@@ -39,6 +39,7 @@ data <- read_csv('Data/WA_Fn-UseC_-Telco-Customer-Churn.csv')
 ```{r}
 data %>% 
         glimpse %>% 
+        gt::gt()
         
 ```
 
@@ -56,8 +57,8 @@ data %>%
         )) %>% mutate(across(everything(),~as.character(.))) %>% 
         pivot_longer(everything(),
                      names_to = c("varible",".value"),
-                     names_sep = c("_\\.")) %>% 
-        print(n="all")
+                     names_sep = c("_\\.")) %>% gt::gt()
+        # print(n="all")
 
 
 #Convertir a factor
@@ -71,22 +72,39 @@ data %>%
 
 data %>%
   mutate(
-    SeniorCitizen = factor(SeniorCitizen, levels = c(0, 1), labels = c('no', 'si')),
-    gender = factor(gender, levels = c('Female', 'Male'), labels = c('Mujeres', 'Hombres')),
-    Partner = factor(Partner, levels = c('Yes', 'No'), labels = c('si', 'No')),
-    Dependents = factor(Dependents, levels = c('Yes', 'No'), labels = c('si', 'No')),
-    PhoneService = factor(PhoneService, levels = c('Yes', 'No'), labels = c('si', 'No')),
-    PaperlessBilling = factor(PaperlessBilling, levels = c('Yes', 'No'), labels = c('si', 'No')),
-    MultipleLines = factor(MultipleLines, levels = c('Yes', 'No', "No phone service"), labels = c('si', 'no', 'sin servicio')),
-    InternetService = factor(InternetService, levels = c('DSL', 'Fiber optic', 'No'), labels = c('DSL', 'Fibra optica', 'No')),
-    OnlineSecurity = factor(OnlineSecurity, levels = c('No', 'Yes', 'No internet service'), labels = c('No', 'Yes', 'sin servicio')),
-    OnlineBackup = factor(OnlineBackup, levels = c('Yes', 'No', 'No internet service'), labels = c('si', 'no', 'sin servicio')),
-    DeviceProtection = factor(DeviceProtection, levels = c('Yes', 'No', 'No internet service'), labels = c('si', 'no', 'sin servicio')),
-    TechSupport = factor(TechSupport, levels = c('Yes', 'No', 'No internet service'), labels = c('si', 'no', 'sin servicio')),
-    StreamingTV = factor(StreamingTV, levels = c('Yes', 'No', 'No internet service'), labels = c('si', 'no', 'sin servicio')),
-    StreamingMovies = factor(StreamingMovies, levels = c('Yes', 'No', 'No internet service'), labels = c('si', 'no', 'sin servicio')),
-    Contract = factor(Contract, levels = c('Month-to-month', 'One year', 'Two year'), labels = c('mes a mes', 'un año', 'dos años')),
-    PaymentMethod = factor(PaymentMethod, levels = c('Electronic check', 'Mailed check', 'Bank transfer (automatic)', 'Credit card (automatic)'), labels = c('cheque electronico', 'cheque mail', 'transferencia bancaria', 'transferencia automatica'))
+    SeniorCitizen = factor(SeniorCitizen, 
+                           levels = c(0, 1), labels = c('no', 'si')),
+    gender = factor(gender,
+                    levels = c('Female', 'Male'), labels = c('Mujeres', 'Hombres')),
+    Partner = factor(Partner,
+                     levels = c('Yes', 'No'), labels = c('si', 'No')),
+    Dependents = factor(Dependents,
+                        levels = c('Yes', 'No'), labels = c('si', 'No')),
+    PhoneService = factor(PhoneService,
+                          levels = c('Yes', 'No'), labels = c('si', 'No')),
+    PaperlessBilling = factor(PaperlessBilling,
+                              levels = c('Yes', 'No'), labels = c('si', 'No')),
+    MultipleLines = factor(MultipleLines, 
+                           levels = c('Yes', 'No', "No phone service"), labels = c('si', 'no', 'sin servicio')),
+    InternetService = factor(InternetService, 
+                             levels = c('DSL', 'Fiber optic', 'No'), labels = c('DSL', 'Fibra optica', 'No')),
+    OnlineSecurity = factor(OnlineSecurity,
+                            levels = c('No', 'Yes', 'No internet service'), labels = c('No', 'Yes', 'sin servicio')),
+    OnlineBackup = factor(OnlineBackup, 
+                          levels = c('Yes', 'No', 'No internet service'), labels = c('si', 'no', 'sin servicio')),
+    DeviceProtection = factor(DeviceProtection, 
+                              levels = c('Yes', 'No', 'No internet service'), labels = c('si', 'no', 'sin servicio')),
+    TechSupport = factor(TechSupport, 
+                         levels = c('Yes', 'No', 'No internet service'), labels = c('si', 'no', 'sin servicio')),
+    StreamingTV = factor(StreamingTV, 
+                         levels = c('Yes', 'No', 'No internet service'), labels = c('si', 'no', 'sin servicio')),
+    StreamingMovies = factor(StreamingMovies, 
+                             levels = c('Yes', 'No', 'No internet service'), labels = c('si', 'no', 'sin servicio')),
+    Contract = factor(Contract, 
+                      levels = c('Month-to-month', 'One year', 'Two year'), labels = c('mes a mes', 'un año', 'dos años')),
+    PaymentMethod = factor(PaymentMethod, 
+                           levels = c('Electronic check', 'Mailed check', 'Bank transfer (automatic)', 'Credit card (automatic)'),
+                           labels = c('cheque electronico', 'cheque mail', 'transferencia bancaria', 'transferencia automatica'))
   ) -> data
 
 
@@ -114,13 +132,15 @@ data %>%
       Descrip= c('P_0', 'P_02', 'P_25', 'P_50' , 'P_75', 'P_98', 'P_100') ,
       Valor= quantile( TotalCharges, c(0, 0.2, 0.25, 0.50 ,0.75, 0.98, 1), na.rm= T)
     )
-    )
+    ) %>% 
+        gt::gt()
 
 #Media por Partner
 data %>% 
         group_by(Partner) %>% 
         summarise(media=mean(TotalCharges,
-                          na.rm =T ))
+                          na.rm =T )) %>% 
+        gt::gt()
 #Distribuciòn de TotalCharges por Partner
 data %>% 
         ggplot(aes(TotalCharges,
@@ -138,7 +158,8 @@ data %>%
   group_by(Churn) %>% 
   count(name = "frec") %>%
 ungroup() %>%
-mutate( Porc= frec/sum(frec))
+mutate( Porc= frec/sum(frec)) %>% 
+        gt::gt()
 
 data %>%
 group_by(Churn) %>%
@@ -162,35 +183,6 @@ El porcentaje de clientes que abandonan el servicio de telecomunicaciones es apr
 
 ### EDA Bivariado
 
-#### Room 2
-
-##### Genero vs Churn
-
-**Tabla**
-
-```{r}
-
-```
-
-**Grafico**
-
-```{r}
-
-```
-
-**Interpretacion**
-
-#### PhoneService vs Churn
-
-```{r}
-
-```
-
-**Interpretacion**
-
-#### Room 4
-
-##### SeniorCitizen vs Churn
 
 **Tabla**
 
