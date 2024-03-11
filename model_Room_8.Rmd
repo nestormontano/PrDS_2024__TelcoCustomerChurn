@@ -17,7 +17,7 @@ editor_options:
 
 ## Preliminares
 
-```{r warning=FALSE}
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
 library(tidyverse)
 library(magrittr)
 library(skimr)
@@ -30,14 +30,16 @@ library(vip)
 
 **Importacion**
 
-```{r}
+```{r message=FALSE}
 data <- read_csv('Data/WA_Fn-UseC_-Telco-Customer-Churn.csv')
 ```
 
 **Verificar y corregir columnas**
 
 ```{r}
-data %>% glimpse
+data %>% 
+        glimpse %>% 
+        
 ```
 
 ```{r}
