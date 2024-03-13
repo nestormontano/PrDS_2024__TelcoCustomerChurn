@@ -15,7 +15,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-## Preliminares
+#Librarias
 
 ```{r message=FALSE, warning=FALSE, paged.print=FALSE}
 library(tidyverse)
@@ -28,14 +28,16 @@ library(xgboost)
 library(vip)
 ```
 
-**Importacion**
+#Cargar datos
 
-```{r message=FALSE}
-data <- read_csv('Data/WA_Fn-UseC_-Telco-Customer-Churn.csv')
+```{r}
+data <- read_csv('Data/WA_Fn-UseC_-Telco-Customer-Churn.csv',
+                 show_col_types = FALSE)
 ```
 
-**Verificar y corregir columnas**
+#Verificar y corregir columnas
 
+### Verificar base de datos con glimpse
 ```{r}
 data %>% 
         glimpse %>% 
@@ -43,6 +45,7 @@ data %>%
         
 ```
 
+### Verificar base de datos y convertir en factor
 ```{r}
 
 
@@ -58,16 +61,13 @@ data %>%
         pivot_longer(everything(),
                      names_to = c("varible",".value"),
                      names_sep = c("_\\.")) %>% gt::gt()
-        # print(n="all")
-
-
+     
 #Convertir a factor
 data %>%
   mutate( Churn = factor(Churn,
   levels= c("Yes","No"),
   labels= c("si", "no"))
   ) -> data
-
 
 
 data %>%
@@ -108,22 +108,19 @@ data %>%
   ) -> data
 
 
-
-
-
 ```
 
-**EDA**
+#EDA
 
-*EDA Univariado*
+### EDA Univariado
 
-*Todas las variables*
+#### Todas las variables
 
 ```{r}
 skim(data)
 ```
 
-### Posibles outliers
+#### Posibles outliers
 
 ```{r warning=FALSE}
 data %>% 
@@ -141,25 +138,28 @@ data %>%
         summarise(media=mean(TotalCharges,
                           na.rm =T )) %>% 
         gt::gt()
+
 #Distribuciòn de TotalCharges por Partner
 data %>% 
         ggplot(aes(TotalCharges,
                    color=Partner))+
         geom_density()+
-        scale_y_continuous(labels = scales::number_format())
+        scale_y_continuous(labels = scales::number_format())+
+        theme_dark()
 ```
 
 Existe una diferencia importante en los registros de dinero cobrado a los clientes al considerar aquellos que tienen pareja. Al revisar el gráfico anterior, se evidencia que las personas que informaron tener pareja son las que presentan los cobros más altos. Esto se refleja en la distribución, donde se observa una densidad mayor para valores altos en comparación con las personas que declararon no tener pareja.
 
-### Balanceo de datos
+#### Revisión del balanceo de datos
 
 ```{r}
 data %>% 
   group_by(Churn) %>% 
   count(name = "frec") %>%
-ungroup() %>%
-mutate( Porc= frec/sum(frec)) %>% 
-        gt::gt()
+        ungroup() %>%
+        mutate( Porc= frec/sum(frec)) %>% 
+        gt::gt() %>% 
+        gt::fmt_percent(columns=Porc)
 
 data %>%
 group_by(Churn) %>%
@@ -183,8 +183,7 @@ El porcentaje de clientes que abandonan el servicio de telecomunicaciones es apr
 
 ### EDA Bivariado
 
-
-**Tabla**
+#### Tabla cruzada SeniorCitizen vs Churn
 
 ```{r}
 data %>%
@@ -194,7 +193,10 @@ data %>%
     Porc = round(100*N/nrow(data),2)
   ) %>%
   mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Sc
-valores_Sc
+
+valores_Sc %>% 
+        ungroup() %>% 
+        gt::gt()
 ```
 
 ```{r echo=T}
