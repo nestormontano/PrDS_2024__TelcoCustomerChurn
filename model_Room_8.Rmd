@@ -1,5 +1,6 @@
 ---
 title: "model_room_8"
+author: "Juan Carlos Jimenez y Juan José Espín"
 output:
   pdf_document: default
   html_document: default
