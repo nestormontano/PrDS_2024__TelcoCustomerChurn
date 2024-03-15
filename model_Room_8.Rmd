@@ -150,7 +150,252 @@ data %>%
 
 Existe una diferencia importante en los registros de dinero cobrado a los clientes al considerar aquellos que tienen pareja. Al revisar el gráfico anterior, se evidencia que las personas que informaron tener pareja son las que presentan los cobros más altos. Esto se refleja en la distribución, donde se observa una densidad mayor para valores altos en comparación con las personas que declararon no tener pareja.
 
-#### Revisión del balanceo de datos
+
+
+### EDA Bivariado
+
+#### Churn vs SeniorCitizen
+
+```{r}
+data %>%
+  group_by(SeniorCitizen, Churn) %>%
+  summarise(
+    N = n(),
+    Porc = round(100*N/nrow(data),2)
+  ) %>%
+  mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Sc
+
+valores_Sc %>% 
+        ungroup() %>% 
+        gt::gt()
+```
+
+```{r echo=T}
+# Comentado por conflictos con paquete
+# tigerstats::rowPerc(xtabs(~SeniorCitizen+Churn, data=data) )
+```
+
+#### Churn vs SeniorCitizen vs Porc_grupo
+
+```{r}
+ggplot(valores_Sc, aes(x = SeniorCitizen, y = Porc_grupo, fill = Churn)) +
+  geom_col(stat = "identity", position = "dodge") +
+  geom_text(aes(label = Porc_grupo), vjust = 1.5,
+            position = position_dodge(.9))
+```
+De los adultos mayores el 41% abandonó el servicio, mientras que de los no adultos mayores apenas un 24% abandonó el servicio. Aparentemente, un adulto mayor tiene mayor probabilidad de abandonar el servicio.
+
+#### Churn vs MultipleLines
+
+```{r message=FALSE}
+valores_Ml <- data %>%
+        count(Churn,MultipleLines) %>% 
+        group_by(Churn) %>% 
+        mutate(n_chur=sum(n),
+               porcentaje_personas=n/n_chur) %>% 
+        ungroup() 
+
+valores_Ml %>% 
+        gt::gt()%>% 
+        gt::fmt_percent(columns=porcentaje_personas)
+```
+
+######Gráfico
+
+```{r}
+valores_Ml %>% 
+        ggplot(aes(Churn, y = porcentaje_personas, fill = MultipleLines)) +
+        geom_col(position = "dodge") +
+        geom_text(aes(label = scales::percent(porcentaje_personas,accuracy = 0.01)), vjust = -0.8,
+                  position = position_dodge(.9))
+```
+
+Entre las categorías de MultipleLines no hay mayor diferencia, entre los que abandonan o no el servicio. Los porcentajes son muy parecidos.
+
+#### Churn vs TechSupport
+
+```{r}
+
+data %>%
+        count(Churn,TechSupport) %>% 
+        group_by(Churn) %>% 
+        mutate(n_chur=sum(n),
+               porcentaje_personas=n/n_chur) %>% 
+        ungroup() %>% 
+        ggplot(aes(Churn,
+                   porcentaje_personas,
+                   fill = TechSupport)) +
+        geom_col(position = "dodge") +
+        geom_text(aes(label = scales::percent(porcentaje_personas,
+                                              accuracy = 0.01)),
+                  vjust = -0.8,
+                  position = position_dodge(.9)) 
+```
+Las personas que se van de la compañía en promedio el 77.37% no tienen soporte técnico y solo el 16.59% de los que se van indican tener soporte técnico.
+
+#### Churn vs PaymentMethod
+
+```{r}
+
+data %>%
+        count(Churn,PaymentMethod) %>% 
+        group_by(Churn) %>% 
+        mutate(n_chur=sum(n),
+               porcentaje_personas=n/n_chur) %>% 
+        ungroup() %>% 
+        ggplot(aes(Churn,
+                   porcentaje_personas,
+                   fill = PaymentMethod)) +
+        geom_col(position = "dodge") +
+        geom_text(aes(label = scales::percent(porcentaje_personas,
+                                              accuracy = 0.1)),
+                  vjust = -0.8,
+                  position = position_dodge(.9)) 
+
+```
+
+A excepción de los que pagan con cheque electrónico los porcentajes de abandono son muy parecidos. En el caso de los que pagan con cheque electrónico un 57.3% abandona el servicio.
+
+#### Churn vs Dependents
+
+```{r}
+data %>% tabyl(Churn, Dependents ) -> t1
+
+t1 %>% adorn_totals(c("row", "col")) %>% adorn_percentages("all") %>%
+adorn_pct_formatting(rounding = "half up", digits = 0) %>% adorn_ns() %>%
+  adorn_title("combined") %>% knitr::kable()
+
+data %>% count(Churn, Dependents) %>%
+  mutate(porc = n / sum(n)) %>% 
+  ggplot(aes(fill=Dependents, y=porc, x=Churn)) + 
+    geom_col(position="stack") +
+    geom_text(aes(label=scales::percent(porc)),position = position_stack(vjust=0.5))+
+  scale_y_continuous(labels = scales::percent_format()) 
+
+
+```
+
+De la muestra analizada alrededor del 27% corresponde a individuos que dejaron sus planes en el último mes. Además se conoce que el 4,6% de estos individuos contaban con personas dependientes.
+
+#### Churn vs OnlineSecurity
+
+```{r}
+
+
+data %>% tabyl(Churn,OnlineSecurity ) -> t2
+
+t2 %>% adorn_totals(c("row", "col")) %>% adorn_percentages("all") %>%
+adorn_pct_formatting(rounding = "half up", digits = 0) %>% adorn_ns()%>% adorn_title("combined")%>% knitr::kable()
+
+
+data %>% count(Churn, OnlineSecurity) %>%
+  mutate(porc = n / sum(n)) %>% 
+  ggplot(aes(fill=OnlineSecurity, y=porc, x=Churn)) + 
+    geom_col(position="stack") +
+    geom_text(aes(label=scales::percent(porc)),position = position_stack(vjust=0.5))+
+  scale_y_continuous(labels = scales::percent_format()) 
+
+
+```
+
+El 20,74% de los indviduos analizados y que abandonaron el servicio no contaban con seguridad en línea. Por otro lado aquellos que no salieron del plan reflejaron una participación similar con relación al servicio de seguridad en línea.
+
+#### Churn vs StreamingMovies
+
+```{r}
+
+data %>% tabyl(Churn,StreamingMovies) -> t3
+
+t3 %>% adorn_totals(c("row", "col")) %>% adorn_percentages("all") %>%
+adorn_pct_formatting(rounding = "half up", digits = 0) %>% adorn_ns()%>% adorn_title("combined")%>% knitr::kable()
+
+
+data %>% count(Churn, StreamingMovies) %>%
+  mutate(porc = n / sum(n)) %>% 
+  ggplot(aes(fill=StreamingMovies, y=porc, x=Churn)) + 
+    geom_col(position="stack") +
+    geom_text(aes(label=scales::percent(porc)),position = position_stack(vjust=0.5))+
+  scale_y_continuous(labels = scales::percent_format()) 
+
+
+```
+
+El 13,32% de los indviduos analizados y que abandonaron el servicio no contaban con servicio de Streaming Movies. Sin embargo, tanto para el grupo que abandonaron o mantuvieron el servicio no se evidencia una importancia relevante para su salidad del plan.
+
+#### Churn vs Total Charges
+
+```{r warning=FALSE}
+
+data %>%  group_by(Churn) %>% 
+  summarise(n = n(),
+            promedio = mean(TotalCharges,na.rm = T),
+            n_missing = sum(is.na(TotalCharges)),
+            desv = sd(TotalCharges, na.rm =T)) -> t4
+t4 %>% 
+        gt::gt()
+
+data %>%
+  ggplot(aes(x = Churn, y = TotalCharges, fill = Churn)) +
+  geom_boxplot() +
+  stat_summary(fun = mean, geom = "point", shape = 3, size = 3,
+               color = "white", position = position_dodge(width = 0.75)) +
+  labs(title = "Churn vs Total Charges",
+       x = "Churn",
+       y = "Total Charges") +
+        theme_minimal()
+
+```
+
+En promedio el gasto total en el servicio de telecomunicaciones para los individuos que salieron del plan es inferior por usuario en alrededor de USD 1000. Para los usuarios que salieron del servicio se evidencia datos atípicos elevados que alcanzan los valores máximos de los usarios que no salieron del servicio. Cabe señalar que, para los usuarios que no abandoron el servicio su extipendio total del plan se concentra entre el rango intercuartílico. Adicionalmente, se observa que la variable gasto total cuenta con 11 valores perdidos.
+
+### EDA Multivariado
+
+#### Churn vs MonthlyCharges vs PaymentMethod
+
+```{r}
+ggplot(data, aes(x = Churn, y = MonthlyCharges, fill = PaymentMethod)) +
+  geom_boxplot()
+```
+
+Los montos de pago de aquellos que abandonan el servicio son superiores a aquellos que permanecen con excepción de los que pagan por cheque electrónico.
+
+#### Churn vs MonthlyCharges vs Dependents
+
+```{r}
+data %>%  group_by(Churn,Dependents) %>% 
+    summarise(n = n(),
+            promedio = mean(MonthlyCharges,na.rm = T),
+            n_missing = sum(is.na(MonthlyCharges)),
+            desv = sd(MonthlyCharges, na.rm =T),
+            .groups="drop")  -> t5
+t5 %>% 
+        gt::gt() %>% 
+        gt::fmt_number(columns = c(promedio,desv),
+                       decimals = 2)
+
+data %>%
+  ggplot(aes(x = Churn, y = MonthlyCharges, fill = Dependents)) +
+  geom_boxplot() +
+  stat_summary(fun = mean, geom = "point", shape = 3, size = 3, color = "white", position = position_dodge(width = 0.75)) +
+  labs(title = "Monthtly Charges for Dependents vs Churn",
+       x = "Churn",
+       y = "Monthly Charges")
+
+```
+
+La distribución del gasto mensual de aquellos individuos que no salieron del plan se concentra dentro del cuartil 1 y cuartil 3, además entre el máximo y mínimo de los que dejaron el servicio respecto de los que se quedaron no se verifica mayor diferencia. Es importante destacar que, tanto el promedio como la mediana del pago mensual es superior en los individuos que salieron del plan de los que se quedaron, no obstante no se verifica mayor diferencia respecto de contar o no con dependientes en los usuarios que abandonaron el plan.
+
+# Matriz de Correlación
+
+```{r message=FALSE, warning=FALSE}
+data %>%  select_if(where(is.numeric)) %>% GGally::ggpairs()
+
+```
+
+Según el gráfico anterior existe una alta correlación positiva entre las variables TotalChanges y tenure, con 0.826, seguida de la correlación entre las variables TotalChages y MonthyChanges, con una correlación moderada de 0.651.
+
+
+# Revisión del balanceo de datos
 
 ```{r}
 data %>% 
@@ -176,299 +421,12 @@ labs(title= 'Porcentaje de Clientes que Abandonan',
 y= "Porcentaje", x= "Churn") +
 theme_bw()
 
-
 ```
 
 El porcentaje de clientes que abandonan el servicio de telecomunicaciones es aproximadamente 3 a 1 en el muestra de análisis.
 
-### EDA Bivariado
 
-#### Tabla cruzada SeniorCitizen vs Churn
-
-```{r}
-data %>%
-  group_by(SeniorCitizen, Churn) %>%
-  summarise(
-    N = n(),
-    Porc = round(100*N/nrow(data),2)
-  ) %>%
-  mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Sc
-
-valores_Sc %>% 
-        ungroup() %>% 
-        gt::gt()
-```
-
-```{r echo=T}
-# Comentado por conflictos con paquete
-# tigerstats::rowPerc(xtabs(~SeniorCitizen+Churn, data=data) )
-```
-
-**Gráfico**
-
-```{r}
-ggplot(valores_Sc, aes(x = SeniorCitizen, y = Porc_grupo, fill = Churn)) +
-  geom_col(stat = "identity", position = "dodge") +
-  geom_text(aes(label = Porc_grupo), vjust = 1.5,
-            position = position_dodge(.9))
-```
-
-**Interpretación**
-
-De los adultos mayores el 41% abandonó el servicio, mientras que de los no adultos mayores apenas un 24% abandonó el servicio. Aparentemente, un adulto mayor tiene mayor probabilidad de abandonar el servicio.
-
-##### MultipleLines vs Churn
-
-**Tabla**
-
-```{r}
-data %>%
-  group_by(MultipleLines, Churn) %>%
-  summarise(
-    N = n(),
-    Porc = round(100*N/nrow(data),2)
-  ) %>%
-  mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Ml
-valores_Ml
-```
-
-```{r echo=T}
-# Comentado por conflictos con paquete
-# tigerstats::rowPerc(xtabs(~MultipleLines+Churn, data=data) )
-```
-
-**Gráfico**
-
-```{r}
-ggplot(valores_Ml, aes(x = MultipleLines, y = N, fill = Churn)) +
-  geom_col(stat = "identity", position = "dodge") +
-  geom_text(aes(label = N), vjust = 1.5,
-            position = position_dodge(.9))
-```
-
-**Interpretación**
-
-Entre las categorías de MultipleLines no hay mayor diferencia, entre los que abandonan o no el servicio. Los porcentajes son muy parecidos.
-
-##### TechSupport vs Churn
-
-```{r}
-data %>%
-  group_by(TechSupport, Churn) %>%
-  summarise(
-    N = n(),
-    Porc = round(100*N/nrow(data),2)
-  ) %>%
-  mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Ts
-valores_Ts
-```
-
-```{r echo=T}
-# Comentado por conflictos con paquete
-# tigerstats::rowPerc(xtabs(~TechSupport+Churn, data=data) )
-```
-
-**Gráfico**
-
-```{r}
-ggplot(valores_Ts, aes(x = TechSupport, y = N, fill = Churn)) +
-  geom_col(stat = "identity", position = "dodge") +
-  geom_text(aes(label = N), vjust = 1.5,
-            position = position_dodge(.9))
-```
-
-**Interpretación**
-
-Los que no cuentan con soporte técnico, el 41.68% abandona el servicio. Por otro lado, los que si cuentan con soporte apenas un 15.17% abandona el servicio y los que no tienen internet contratado solo un 7.40% abandona el servicio.
-
-##### PaymentMethod vs Churn
-
-```{r}
-data %>%
-  group_by(PaymentMethod, Churn) %>%
-  summarise(
-    N = n(),
-    Porc = round(100*N/nrow(data),2)
-  ) %>%
-  mutate(Porc_grupo = round(100*N/sum(N),2)) -> valores_Pm
-valores_Pm
-```
-
-```{r echo=T}
-# Comentado por conflictos con paquete
-# tigerstats::rowPerc(xtabs(~PaymentMethod+Churn, data=data) )
-```
-
-**Gráfico**
-
-```{r}
-ggplot(valores_Pm, aes(x = PaymentMethod, y = N, fill = Churn)) +
-  geom_col(stat = "identity", position = "dodge") +
-  geom_text(aes(label = N), vjust = 1.5,
-            position = position_dodge(.9))
-```
-
-**Interpretación**
-
-A excepción de los que pagan con cheque electrónico los porcentajes de abandono son muy parecidos. En el caso de los que pagan con cheque electrónico un 45.29% abandona el servicio.
-
-### EDA Multivariado
-
-#### MonthlyCharges vs PaymentMethod vs Churn
-
-**Gráfico 1**
-
-```{r}
-ggplot(data, aes(x = PaymentMethod, y = MonthlyCharges, fill = Churn)) +
-  geom_boxplot()
-```
-
-**Interpretación**
-
-**Gráfico 2**
-
-```{r}
-ggplot(data, aes(x = Churn, y = MonthlyCharges, fill = PaymentMethod)) +
-  geom_boxplot()
-```
-
-**Interpretación**
-
-Los montos de pago de aquellos que abandonan el servicio son superiores a aquellos que permanecen con excepción de los que pagan por cheque electrónico.
-
-### Room 6
-
-### Room 7
-
-### Room 8
-
-#### Eda Bivariado entre churn y Dependents
-
-```{r}
-data %>% tabyl(Churn, Dependents ) -> t1
-
-t1 %>% adorn_totals(c("row", "col")) %>% adorn_percentages("all") %>%
-adorn_pct_formatting(rounding = "half up", digits = 0) %>% adorn_ns() %>%
-  adorn_title("combined") %>% knitr::kable()
-
-data %>% count(Churn, Dependents) %>%
-  mutate(porc = n / sum(n)) %>% 
-  ggplot(aes(fill=Dependents, y=porc, x=Churn)) + 
-    geom_col(position="stack") +
-    geom_text(aes(label=scales::percent(porc)),position = position_stack(vjust=0.5))+
-  scale_y_continuous(labels = scales::percent_format()) 
-
-
-```
-
-De la muestra analizada alrededor del 27% corresponde a individuos que dejaron sus planes en el último mes. Además se conoce que el 4,6% de estos individuos contaban con personas dependientes.
-
-#### Eda Bivariado entre churn y OnlineSecurity
-
-```{r}
-
-
-data %>% tabyl(Churn,OnlineSecurity ) -> t2
-
-t2 %>% adorn_totals(c("row", "col")) %>% adorn_percentages("all") %>%
-adorn_pct_formatting(rounding = "half up", digits = 0) %>% adorn_ns()%>% adorn_title("combined")%>% knitr::kable()
-
-
-data %>% count(Churn, OnlineSecurity) %>%
-  mutate(porc = n / sum(n)) %>% 
-  ggplot(aes(fill=OnlineSecurity, y=porc, x=Churn)) + 
-    geom_col(position="stack") +
-    geom_text(aes(label=scales::percent(porc)),position = position_stack(vjust=0.5))+
-  scale_y_continuous(labels = scales::percent_format()) 
-
-
-```
-
-El 20,74% de los indviduos analizados y que abandonaron el servicio no contaban con seguridad en línea. Por otro lado aquellos que no salieron del plan reflejaron una participación similar con relación al servicio de seguridad en línea.
-
-#### Eda Bivariado entre Churn y StreamingMovies
-
-```{r}
-
-data %>% tabyl(Churn,StreamingMovies) -> t3
-
-t3 %>% adorn_totals(c("row", "col")) %>% adorn_percentages("all") %>%
-adorn_pct_formatting(rounding = "half up", digits = 0) %>% adorn_ns()%>% adorn_title("combined")%>% knitr::kable()
-
-
-data %>% count(Churn, StreamingMovies) %>%
-  mutate(porc = n / sum(n)) %>% 
-  ggplot(aes(fill=StreamingMovies, y=porc, x=Churn)) + 
-    geom_col(position="stack") +
-    geom_text(aes(label=scales::percent(porc)),position = position_stack(vjust=0.5))+
-  scale_y_continuous(labels = scales::percent_format()) 
-
-
-```
-
-El 13,32% de los indviduos analizados y que abandonaron el servicio no contaban con servicio de Streaming Movies. Sin embargo, tanto para el grupo que abandonaron o mantuvieron el servicio no se evidencia una importancia relevante para su salidad del plan.
-
-#### Eda Bivariado entre churn y Total Charges
-
-```{r warning=FALSE}
-
-data %>%  group_by(Churn) %>% 
-  summarise(n = n(),
-            promedio = mean(TotalCharges,na.rm = T),
-            n_missing = sum(is.na(TotalCharges)),
-            desv = sd(TotalCharges, na.rm =T)) -> t4
-t4
-
-data %>%
-  ggplot(aes(x = Churn, y = TotalCharges, fill = Churn)) +
-  geom_boxplot() +
-  stat_summary(fun = mean, geom = "point", shape = 3, size = 3,
-               color = "white", position = position_dodge(width = 0.75)) +
-  labs(title = "Churn vs Total Charges",
-       x = "Churn",
-       y = "Total Charges") +
-        theme_minimal()
-
-```
-
-En promedio el gasto total en el servicio de telecomunicaciones para los individuos que salieron del plan es inferior por usuario en alrededor de USD 1000. Para los usuarios que salieron del servicio se evidencia datos atípicos elevados que alcanzan los valores máximos de los usarios que no salieron del servicio. Cabe señalar que, para los usuarios que no abandoron el servicio su extipendio total del plan se concentra entre el rango intercuartílico. Adicionalmente, se observa que la variable gasto total cuenta con 11 valores perdidos.
-
-#### Eda Multivariado entre MonthlyCharges vs Dependents vs Churn
-
-```{r}
-data %>%  group_by(Churn,Dependents) %>% 
-    summarise(n = n(),
-            promedio = mean(MonthlyCharges,na.rm = T),
-            n_missing = sum(is.na(MonthlyCharges)),
-            desv = sd(MonthlyCharges, na.rm =T)) -> t5
-t5
-data %>%
-  ggplot(aes(x = Churn, y = MonthlyCharges, fill = Dependents)) +
-  geom_boxplot() +
-  stat_summary(fun = mean, geom = "point", shape = 3, size = 3, color = "white", position = position_dodge(width = 0.75)) +
-  labs(title = "Monthtly Charges for Dependents vs Churn",
-       x = "Churn",
-       y = "Monthly Charges")
-
-```
-
-La distribución del gasto mensual de aquellos individuos que no salieron del plan se concentra dentro del cuartil 1 y cuartil 3, además entre el máximo y mínimo de los que dejaron el servicio respecto de los que se quedaron no se verifica mayor diferencia. Es importante destacar que, tanto el promedio como la mediana del pago mensual es superior en los individuos que salieron del plan de los que se quedaron, no obstante no se verifica mayor diferencia respecto de contar o no con dependientes en los usuarios que abandonaron el plan.
-
-### Room 9
-
-### Room 10
-
-### Matriz de Correlación
-
-```{r message=FALSE, warning=FALSE}
-#data %>%  select(-customerID) %>% GGally::ggpairs()
-data %>%  select_if(where(is.numeric)) %>% GGally::ggpairs()
-
-```
-
-Según el gráfico anterior existe una alta correlación positiva entre las variables TotalChanges y tenure, con 0.826, seguida de la correlación entre las variables TotalChages y MonthyChanges, con una correlación moderada de 0.651.
-
-**MODELAMIENTO**
+# MODELAMIENTO
 
 ### Train - Test Split
 
@@ -543,7 +501,7 @@ themis::step_upsample(Churn, over_ratio = 0.9, skip= TRUE, seed= 123)
 
 set.seed(1234)
 cv <- vfold_cv(train, v = 5, repeats = 1, strata = Churn)
-cv
+cv 
 
 
 ```
@@ -557,9 +515,9 @@ metricas
 
 ```
 
-**Modelamiento - Random Forest**
+# Modelamiento - Random Forest
 
-*Especificacion del modelo*
+### Especificacion del modelo*
 
 ```{r}
 rf_sp <-
@@ -570,7 +528,7 @@ rf_sp <-
 
 ```
 
-*Work Flow*
+### Work Flow
 
 ```{r}
 rf_wflow <-
@@ -582,7 +540,7 @@ rf_wflow <-
 
 ```
 
-*Afinamiento de Hiperpárametros*
+### Afinamiento de Hiperpárametros
 
 ```{r}
 set.seed(123)
@@ -606,7 +564,7 @@ La data luego de aplicar la receta registra 31 variables, por tanto, se utiliza 
 
 ```
 
-*Entrenamiento de Malla de Búsqueda en la Crossvalidation*
+### Entrenamiento de Malla de Búsqueda en la Crossvalidation
 
 ```{r}
 set.seed(123)
@@ -621,7 +579,7 @@ rf_tuned
 
 ```
 
-*Evaluación de modelos Evaluamos que modelo resulto mejor*
+### Evaluación de modelos Evaluamos que modelo resulto mejor
 
 ```{r}
 show_best(rf_tuned, metric = 'accuracy', n = 10)
@@ -642,7 +600,7 @@ show_best(rf_tuned, metric = 'bal_accuracy', n = 10)
 
 Revisando los resultados de las métricas de evaluación del modelo y considerando que es de interés para le empresa contar con la mejor estimación de los individuos que realmente abandonan el servicio se selecciona como referencia los hiperpárametros del modelo número 6 que presenta los mejores resultados en sensibilidad, para ajustar el modelo final.
 
-*Nueva Malla de Búsqueda*
+### Nueva Malla de Búsqueda
 
 ```{r}
 
@@ -658,7 +616,7 @@ rf_grid_2
 
 ```
 
-*Entrenamiento de Malla de Busqueda en la Crossvalidation*
+### Entrenamiento de Malla de Busqueda en la Crossvalidation
 
 ```{r}
 
@@ -692,7 +650,7 @@ show_best(rf_tuned_2, metric = 'spec', n = 10)
 show_best(rf_tuned_2, metric = 'bal_accuracy', n = 10)
 ```
 
-*Modelo final*
+### Modelo final
 
 ```{r}
 ## Definir la mejor combinacion
@@ -704,7 +662,7 @@ rf_wflow %>%
 rf_wflow_fin
 ```
 
-*Entrenamiento del modelo*
+### Entrenamiento del modelo
 
 Entrenar el modelo final
 
@@ -715,13 +673,13 @@ rf_fitted
 
 ```
 
-*Modelo sin workflow*
+### Modelo sin workflow
 
 ```{r}
 rf_model_fin <- extract_fit_parsnip(rf_fitted)
 ```
 
-*Evaluación del Modelo*
+### Evaluación del Modelo
 
 Evaluación en la data de entrenamiento
 
@@ -735,7 +693,7 @@ summary
 
 ```
 
-*Evaluación en la data de prueba*
+### Evaluación en la data de prueba
 
 ```{r}
 test %>%
@@ -745,7 +703,7 @@ mutate(Real= test$Churn) %>%
 summary
 ```
 
-*¿Que variables pueden estar relacionadas más con el abandono de clientes?*
+### ¿Que variables pueden estar relacionadas más con el abandono de clientes?
 
 ```{r}
 library(vip)
@@ -753,13 +711,13 @@ rf_model_fin %>%
   vip(geom = "point")
 ```
 
-**Modelo Boosting XGBoost**
+# Modelo Boosting XGBoost*
 
 Como parte del ejercicio de selección del mejor modelo para la determinación de la mejor estrategia para retención de clientes, se utiliza el algoritmo XGboost con la finalidad de elegir el modelo con mayor poder predictivo.
 
 Para tal efecto, la aplicación del algoritmo XGboost inicia a partir de la receta establecida para los datos de abandono de clientes del servicio de telecomunicaciones.
 
-*Especificación del modelo*
+### Especificación del modelo
 
 ```{r}
 
@@ -775,7 +733,7 @@ xgb_sp %>%
 
 ```
 
-*Afinamiento de Malla de búsqueda*
+### Afinamiento de Malla de búsqueda
 
 Previo a establecer la malla de búsqueda el algoritmo requiere la data incorporada las funciones establecidas en la receta, por tal motivo se aplica prep y bake. Posteriormente, se obtiene la malla de búsqueda
 
@@ -795,7 +753,7 @@ xgb_grid
 
 ```
 
-*Work Flow*
+### Work Flow
 
 ```{r}
 
@@ -807,7 +765,7 @@ xgb_wflow <-
 xgb_wflow
 ```
 
-*Entrenamiento de Malla de Busqueda en la Crossvalidation - Xgboost*
+### Entrenamiento de Malla de Busqueda en la Crossvalidation - Xgboost
 
 ```{r}
 
@@ -826,7 +784,7 @@ xgb_tuned
 
 ```
 
-*Mejor modelo*
+### Mejor modelo
 
 Evaluamos que modelo resulto mejor
 
@@ -849,7 +807,7 @@ show_best(xgb_tuned, metric = 'spec', n = 10)
 show_best(xgb_tuned, metric = 'bal_accuracy', n = 10)
 ```
 
-*Selección del modelo final*
+### Selección del modelo final
 
 La selección de los hipepáramestros es con base al mejor modelo de sensibilidad y "bal_accuracy", por tanto se el modelo final resulta ser el modelo 04, no se realizá un proceso búsqueda manual del mejor modelo debido a la amplitud de valores que puede tomar el learn_rate y la función de costo, así como la discrecionalidad de la amplitud de búsqueda.
 
@@ -863,14 +821,14 @@ xgb_wflow_fin
 
 ```
 
-*Entrenar el modelo final*
+### Entrenar el modelo final
 
 ```{r}
 xgb_fitted <- fit(xgb_wflow_fin, train)
 xgb_fitted
 ```
 
-*Selección del modelo*
+### Selección del modelo
 
 ```{r}
 
@@ -879,7 +837,7 @@ xgb_model_fin
 
 ```
 
-*Evaluación del modelo en la data de entrenamiento y prueba*
+### Evaluación del modelo en la data de entrenamiento y prueba
 
 ```{r}
 train %>%
@@ -901,7 +859,7 @@ test %>%
 
 ```
 
-*Importancia de las variables en el modelo*
+### Importancia de las variables en el modelo
 
 ```{r}
 
@@ -911,6 +869,6 @@ vip(xgb_model_fin)
 
 Analizando la importancia de las variables en el modelo se verifica que el gasto mensual y total presentan una alta importancia en las variables sin embargo el gasto total es una combinación lineal del gasto mensual, por lo que se podría excluir del modelo una de las variabales para probar si incrementa su capacidad de predicción con respecto a sensibilidad y bal_accuracy.
 
-### Conclusión
+# Conclusión
 
 Del análisis realizado se evidencia que ambos modelos (Random Forest y Xgboost ) presentan muy buena estimación con relación a sensibilidad, es decir con la capacidad de predicción de los individuos que abandonan el servicio, no obstante Xgboost presenta un resultado superior en el test de prueba (0.74 \> 0.72), por tanto el modelo seleccionado es Xgboost.
