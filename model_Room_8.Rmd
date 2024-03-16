@@ -160,34 +160,6 @@ El porcentaje de clientes que abandonan el servicio de telecomunicaciones es apr
 
 ### EDA Bivariado
 
-#### Room 2
-
-##### Genero vs Churn
-
-**Tabla**
-
-```{r}
-
-```
-
-**Grafico**
-
-```{r}
-
-```
-
-**Interpretacion**
-
-#### PhoneService vs Churn
-
-```{r}
-
-```
-
-**Interpretacion**
-
-#### Room 4
-
 ##### SeniorCitizen vs Churn
 
 **Tabla**
@@ -340,11 +312,6 @@ ggplot(data, aes(x = Churn, y = MonthlyCharges, fill = PaymentMethod)) +
 
 Los montos de pago de aquellos que abandonan el servicio son superiores a aquellos que permanecen con excepción de los que pagan por cheque electrónico.
 
-### Room 6
-
-### Room 7
-
-### Room 8
 
 #### Eda Bivariado entre churn y Dependents
 
@@ -458,9 +425,6 @@ data %>%
 
 La distribución del gasto mensual de aquellos individuos que no salieron del plan se concentra dentro del cuartil 1 y cuartil 3, además entre el máximo y mínimo de los que dejaron el servicio respecto de los que se quedaron no se verifica mayor diferencia. Es importante destacar que, tanto el promedio como la mediana del pago mensual es superior en los individuos que salieron del plan de los que se quedaron, no obstante no se verifica mayor diferencia respecto de contar o no con dependientes en los usuarios que abandonaron el plan.
 
-### Room 9
-
-### Room 10
 
 ### Matriz de Correlación
 
@@ -601,7 +565,7 @@ grid_latin_hypercube(size = 10) #preguntar como se construye la malla
 
 ```
 
-La data luego de aplicar la receta registra 31 variables, por tanto, se utiliza como criterio para establecer el hiperpárametro "mtry" la raíz cuadrada del número de variables analizadas siendo esta igual a 5,56. En tal sentido, y con la finalidad de contar con un rango para la elección de variables este se establece entre 4 a 7. 
+La data luego de aplicar la receta registra 31 variables, por tanto, se utiliza como criterio para establecer el hiperpárametro "mtry" la raíz cuadrada del número de variables analizadas siendo esta igual a 5,56. Con la finalidad de contar con un rango para la elección de variables se establece entre 4 a 7. 
 
 ###Paralelización
 
