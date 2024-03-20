@@ -154,7 +154,13 @@ Existe una diferencia importante en los registros de dinero cobrado a los client
 
 ### EDA Bivariado
 
+<<<<<<< HEAD
+##### SeniorCitizen vs Churn
+
+**Tabla**
+=======
 #### Churn vs SeniorCitizen
+>>>>>>> 7136bf2cb51946b67a310e833c330afd2b239bc3
 
 ```{r}
 data %>%
@@ -256,7 +262,49 @@ data %>%
 
 A excepción de los que pagan con cheque electrónico los porcentajes de abandono son muy parecidos. En el caso de los que pagan con cheque electrónico un 57.3% abandona el servicio.
 
+<<<<<<< HEAD
+**Gráfico**
+
+```{r}
+ggplot(valores_Pm, aes(x = PaymentMethod, y = N, fill = Churn)) +
+  geom_col(stat = "identity", position = "dodge") +
+  geom_text(aes(label = N), vjust = 1.5,
+            position = position_dodge(.9))
+```
+
+**Interpretación**
+
+A excepción de los que pagan con cheque electrónico los porcentajes de abandono son muy parecidos. En el caso de los que pagan con cheque electrónico un 45.29% abandona el servicio.
+
+### EDA Multivariado
+
+#### MonthlyCharges vs PaymentMethod vs Churn
+
+**Gráfico 1**
+
+```{r}
+ggplot(data, aes(x = PaymentMethod, y = MonthlyCharges, fill = Churn)) +
+  geom_boxplot()
+```
+
+**Interpretación**
+
+**Gráfico 2**
+
+```{r}
+ggplot(data, aes(x = Churn, y = MonthlyCharges, fill = PaymentMethod)) +
+  geom_boxplot()
+```
+
+**Interpretación**
+
+Los montos de pago de aquellos que abandonan el servicio son superiores a aquellos que permanecen con excepción de los que pagan por cheque electrónico.
+
+
+#### Eda Bivariado entre churn y Dependents
+=======
 #### Churn vs Dependents
+>>>>>>> 7136bf2cb51946b67a310e833c330afd2b239bc3
 
 ```{r}
 data %>% tabyl(Churn, Dependents ) -> t1
@@ -385,7 +433,12 @@ data %>%
 
 La distribución del gasto mensual de aquellos individuos que no salieron del plan se concentra dentro del cuartil 1 y cuartil 3, además entre el máximo y mínimo de los que dejaron el servicio respecto de los que se quedaron no se verifica mayor diferencia. Es importante destacar que, tanto el promedio como la mediana del pago mensual es superior en los individuos que salieron del plan de los que se quedaron, no obstante no se verifica mayor diferencia respecto de contar o no con dependientes en los usuarios que abandonaron el plan.
 
+<<<<<<< HEAD
+
+### Matriz de Correlación
+=======
 # Matriz de Correlación
+>>>>>>> 7136bf2cb51946b67a310e833c330afd2b239bc3
 
 ```{r message=FALSE, warning=FALSE}
 data %>%  select_if(where(is.numeric)) %>% GGally::ggpairs()
@@ -555,7 +608,7 @@ grid_latin_hypercube(size = 10) #preguntar como se construye la malla
 
 ```
 
-La data luego de aplicar la receta registra 31 variables, por tanto, se utiliza como criterio para establecer el hiperpárametro "mtry" la raíz cuadrada del número de variables analizadas siendo esta igual a 5,56. En tal sentido, y con la finalidad de contar con un rango para la elección de variables este se establece entre 4 a 7. 
+La data luego de aplicar la receta registra 31 variables, por tanto, se utiliza como criterio para establecer el hiperpárametro "mtry" la raíz cuadrada del número de variables analizadas siendo esta igual a 5,56. Con la finalidad de contar con un rango para la elección de variables se establece entre 4 a 7. 
 
 ###Paralelización
 
