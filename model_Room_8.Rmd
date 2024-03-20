@@ -2,8 +2,8 @@
 title: "model_room_8"
 author: "Juan Carlos Jimenez y Juan José Espín"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 date: "2024-02-17"
 ---
 
@@ -41,8 +41,7 @@ data <- read_csv('Data/WA_Fn-UseC_-Telco-Customer-Churn.csv',
 ### Verificar base de datos con glimpse
 ```{r}
 data %>% 
-        glimpse %>% 
-        gt::gt()
+        glimpse
         
 ```
 
