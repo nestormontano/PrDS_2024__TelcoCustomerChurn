@@ -41,8 +41,7 @@ data <- read_csv('Data/WA_Fn-UseC_-Telco-Customer-Churn.csv',
 ### Verificar base de datos con glimpse
 ```{r}
 data %>% 
-        glimpse %>% 
-        gt::gt()
+        glimpse
         
 ```
 
@@ -155,13 +154,7 @@ Existe una diferencia importante en los registros de dinero cobrado a los client
 
 ### EDA Bivariado
 
-<<<<<<< HEAD
-##### SeniorCitizen vs Churn
-
-**Tabla**
-=======
 #### Churn vs SeniorCitizen
->>>>>>> 7136bf2cb51946b67a310e833c330afd2b239bc3
 
 ```{r}
 data %>%
@@ -263,49 +256,8 @@ data %>%
 
 A excepción de los que pagan con cheque electrónico los porcentajes de abandono son muy parecidos. En el caso de los que pagan con cheque electrónico un 57.3% abandona el servicio.
 
-<<<<<<< HEAD
-**Gráfico**
 
-```{r}
-ggplot(valores_Pm, aes(x = PaymentMethod, y = N, fill = Churn)) +
-  geom_col(stat = "identity", position = "dodge") +
-  geom_text(aes(label = N), vjust = 1.5,
-            position = position_dodge(.9))
-```
-
-**Interpretación**
-
-A excepción de los que pagan con cheque electrónico los porcentajes de abandono son muy parecidos. En el caso de los que pagan con cheque electrónico un 45.29% abandona el servicio.
-
-### EDA Multivariado
-
-#### MonthlyCharges vs PaymentMethod vs Churn
-
-**Gráfico 1**
-
-```{r}
-ggplot(data, aes(x = PaymentMethod, y = MonthlyCharges, fill = Churn)) +
-  geom_boxplot()
-```
-
-**Interpretación**
-
-**Gráfico 2**
-
-```{r}
-ggplot(data, aes(x = Churn, y = MonthlyCharges, fill = PaymentMethod)) +
-  geom_boxplot()
-```
-
-**Interpretación**
-
-Los montos de pago de aquellos que abandonan el servicio son superiores a aquellos que permanecen con excepción de los que pagan por cheque electrónico.
-
-
-#### Eda Bivariado entre churn y Dependents
-=======
 #### Churn vs Dependents
->>>>>>> 7136bf2cb51946b67a310e833c330afd2b239bc3
 
 ```{r}
 data %>% tabyl(Churn, Dependents ) -> t1
@@ -434,12 +386,8 @@ data %>%
 
 La distribución del gasto mensual de aquellos individuos que no salieron del plan se concentra dentro del cuartil 1 y cuartil 3, además entre el máximo y mínimo de los que dejaron el servicio respecto de los que se quedaron no se verifica mayor diferencia. Es importante destacar que, tanto el promedio como la mediana del pago mensual es superior en los individuos que salieron del plan de los que se quedaron, no obstante no se verifica mayor diferencia respecto de contar o no con dependientes en los usuarios que abandonaron el plan.
 
-<<<<<<< HEAD
 
-### Matriz de Correlación
-=======
 # Matriz de Correlación
->>>>>>> 7136bf2cb51946b67a310e833c330afd2b239bc3
 
 ```{r message=FALSE, warning=FALSE}
 data %>%  select_if(where(is.numeric)) %>% GGally::ggpairs()
@@ -545,7 +493,7 @@ step_dummy(all_nominal(), -all_outcomes() ) %>% # Dummy
 step_nzv(all_predictors()) %>% 
 themis::step_upsample(Churn, over_ratio = 0.9, skip= TRUE, seed= 123)  
 
-
+receta
 
 ```
 
@@ -580,6 +528,8 @@ rf_sp <-
   set_engine("ranger", importance = "impurity") %>%
   set_mode("classification")
 
+rf_sp
+
 ```
 
 ### Work Flow
@@ -596,7 +546,7 @@ rf_wflow <-
 
 ### Afinamiento de Hiperpárametros
 
-```{r}
+```{r warning=FALSE}
 set.seed(123)
 rf_grid <- rf_sp %>%
 ## preguntamos los parametros tuneables del modelo
@@ -606,6 +556,8 @@ update(min_n= min_n( range= c(70, 170)),
 mtry= mtry( range= c(4, 7))) %>%
 grid_latin_hypercube(size = 10) #preguntar como se construye la malla
 
+rf_grid %>% 
+        gt::gt()
 
 ```
 
@@ -636,20 +588,32 @@ rf_tuned
 ### Evaluación de modelos Evaluamos que modelo resulto mejor
 
 ```{r}
-show_best(rf_tuned, metric = 'accuracy', n = 10)
+show_best(rf_tuned, metric = 'accuracy', n = 10)%>% 
+        gt::gt() %>% 
+        gt::fmt_percent(columns = mean,
+                        decimals = 2)
 ```
 
 ```{r}
-show_best(rf_tuned, metric = 'sens', n = 10)
+show_best(rf_tuned, metric = 'sens', n = 10) %>% 
+        gt::gt() %>% 
+        gt::fmt_percent(columns = mean,
+                        decimals = 2)
 ```
 
 ```{r}
-show_best(rf_tuned, metric = 'spec', n = 10)
+show_best(rf_tuned, metric = 'spec', n = 10)%>% 
+        gt::gt() %>% 
+        gt::fmt_percent(columns = mean,
+                        decimals = 2)
 
 ```
 
 ```{r}
-show_best(rf_tuned, metric = 'bal_accuracy', n = 10)
+show_best(rf_tuned, metric = 'bal_accuracy', n = 10)%>% 
+        gt::gt() %>% 
+        gt::fmt_percent(columns = mean,
+                        decimals = 2)
 ```
 
 Revisando los resultados de las métricas de evaluación del modelo y considerando que es de interés para le empresa contar con la mejor estimación de los individuos que realmente abandonan el servicio se selecciona como referencia los hiperpárametros del modelo número 6 que presenta los mejores resultados en sensibilidad, para ajustar el modelo final.
@@ -666,7 +630,8 @@ rf_grid_2 <- crossing(
   trees= seq(1270, 1570, 100)
 )
 
-rf_grid_2
+rf_grid_2%>% 
+        gt::gt()
 
 ```
 
@@ -689,19 +654,31 @@ rf_tuned_2
 Evaluamos que modelo resulto mejor de la segunda grilla de hiperpárametros
 
 ```{r}
-show_best(rf_tuned_2, metric = 'accuracy', n = 10)
+show_best(rf_tuned_2, metric = 'accuracy', n = 10)%>% 
+        gt::gt() %>% 
+        gt::fmt_percent(columns = mean,
+                        decimals = 2)
 ```
 
 ```{r}
-show_best(rf_tuned_2, metric = 'sens', n = 10)
+show_best(rf_tuned_2, metric = 'sens', n = 10)%>% 
+        gt::gt() %>% 
+        gt::fmt_percent(columns = mean,
+                        decimals = 2)
 ```
 
 ```{r}
-show_best(rf_tuned_2, metric = 'spec', n = 10)
+show_best(rf_tuned_2, metric = 'spec', n = 10)%>% 
+        gt::gt() %>% 
+        gt::fmt_percent(columns = mean,
+                        decimals = 2)
 ```
 
 ```{r}
-show_best(rf_tuned_2, metric = 'bal_accuracy', n = 10)
+show_best(rf_tuned_2, metric = 'bal_accuracy', n = 10)%>% 
+        gt::gt() %>% 
+        gt::fmt_percent(columns = mean,
+                        decimals = 2)
 ```
 
 Se verifica que el modelo obtenido de la primera malla de hiperparámetros tiene mejores resultados en sensibilidad que la segunda grilla, por tanto se selecciona el mejor modelo del primer ejercicio. 
