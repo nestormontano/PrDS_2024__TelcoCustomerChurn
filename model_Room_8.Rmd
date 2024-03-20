@@ -704,6 +704,7 @@ show_best(rf_tuned_2, metric = 'spec', n = 10)
 show_best(rf_tuned_2, metric = 'bal_accuracy', n = 10)
 ```
 
+Se verifica que el modelo obtenido de la primera malla de hiperparámetros tiene mejores resultados en sensibilidad que la segunda grilla, por tanto se selecciona el mejor modelo del primer ejercicio. 
 ### Modelo final
 
 ```{r}
@@ -925,4 +926,4 @@ Analizando la importancia de las variables en el modelo se verifica que el gasto
 
 # Conclusión
 
-Del análisis realizado se evidencia que ambos modelos (Random Forest y Xgboost ) presentan muy buena estimación con relación a sensibilidad, es decir con la capacidad de predicción de los individuos que abandonan el servicio, no obstante Xgboost presenta un resultado superior en el test de prueba (0.74 \> 0.72), por tanto el modelo seleccionado es Xgboost.
+Del análisis realizado se evidencia que ambos modelos (Random Forest y Xgboost ) presentan muy buena estimación con relación a sensibilidad, es decir con la capacidad de predicción de los individuos que abandonan el servicio, no obstante Xgboost presenta un resultado superior en el test de prueba (0.7459 \> 0.7245), por tanto el modelo seleccionado es Xgboost.
