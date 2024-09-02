@@ -71,7 +71,7 @@ scipy = "^1.11.4"
 scikit-learn = "^1.5.1"
 imbalanced-learn = "^0.12.3"
 pygam = "^0.9.1"
-jupyter = "^1.0.0"
+jupyter = "^1.1.1"
 urllib3 = "^2.2.2"
 
 
