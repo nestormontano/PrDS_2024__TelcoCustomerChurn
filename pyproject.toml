@@ -1,0 +1,252 @@
+[tool.poetry]
+name = "prds-2024-telcocustomerchurn"
+version = "0.1.0"
+description = "Telco Customer Churn. Focused customer retention programs"
+license = "MIT"
+authors = ["Juan Pablo Cadena Aguilar <jpcadena@espol.edu.ec>"]
+maintainers = ["Juan Pablo Cadena Aguilar <jpcadena@espol.edu.ec>"]
+readme = "README.md"
+homepage = "https://github.com/nestormontano/PrDS_2024__TelcoCustomerChurn"
+repository = "https://github.com/jpcadena/PrDS_2024__TelcoCustomerChurn"
+documentation = "https://github.com/jpcadena/PrDS_2024__TelcoCustomerChurn"
+keywords = [
+    "python",
+    "data analysis",
+    "data-reporting",
+    "data-visualization",
+    "poetry",
+    "isort",
+    "ruff",
+    "black-formatter",
+    "mypy",
+    "pre-commit",
+    "numpy",
+    "pandas",
+    "matplotlib",
+    "seaborn",
+    "plotly",
+    "churn",
+    "customer-churn"
+]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Documentation",
+    "Topic :: File Formats",
+    "Topic :: Internet",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Version Control",
+    "Topic :: Software Development :: Version Control :: CVS",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Topic :: Text Processing :: Markup :: HTML",
+    "Topic :: Text Processing :: Markup :: Markdown",
+    "Topic :: Text Processing :: Markup :: reStructuredText",
+    "Typing :: Typed",
+]
+packages = [{include = "prds_2024_telcocustomerchurn"}]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+isort = "^5.13.2"
+black = {extras = ["jupyter"], version = "^24.10.0"}
+ruff = "^0.6.9"
+mypy = "^1.11.2"
+pre-commit = "^4.0.1"
+numpy = "^1.26.4"
+pandas = "^2.2.3"
+matplotlib = "^3.9.2"
+seaborn = "^0.13.2"
+scipy = "^1.11.4"
+scikit-learn = "^1.5.2"
+imbalanced-learn = "^0.12.4"
+pygam = "^0.9.1"
+jupyter = "^1.1.1"
+urllib3 = "^2.2.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.urls]
+"Telco Customer Churn" = "https://github.com/nestormontano/PrDS_2024__TelcoCustomerChurn"
+
+[tool.isort]
+py_version = 311
+skip_glob = ["cache/*", ".ruff_cache/*", ".mypy_cache/*"]
+skip_gitignore = true
+line_length = 80
+multi_line_output = 3
+use_parentheses = true
+atomic = true
+include_trailing_comma = true
+force_grid_wrap = 0
+case_sensitive = true
+ensure_newline_before_comments = true
+profile = "black"
+remove_redundant_aliases = true
+color_output = true
+
+[tool.black]
+line-length = 80
+target-version = ["py311"]
+exclude = '''
+(
+    /(\.venv
+  | \.mypy_cache
+  | \.ruff_cache
+  | cache
+  | venv)
+)
+'''
+skip-string-normalization = true
+
+[tool.ruff]
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    "cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+line-length = 80
+indent-width = 4
+target-version = "py311"
+extend-include = ["*.ipynb"]
+fix = true
+output-format = "grouped"
+show-fixes = true
+
+[tool.ruff.lint]
+select = [
+    "E", # pycodestyle errors
+    "W", # pycodestyle warnings
+    "F", # pyflakes
+    "I", # isort
+    "C4", # flake8-comprehensions
+]
+ignore = [
+    "E501", # line too long, handled by black
+    "B008", # do not perform function calls in argument defaults
+]
+fixable = [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "I",
+    "N",
+    "Q",
+    "S",
+    "T",
+    "W",
+    "ANN",
+    "ARG",
+    "BLE",
+    "COM",
+    "DJ",
+    "DTZ",
+    "EM",
+    "ERA",
+    "EXE",
+    "FBT",
+    "ICN",
+    "INP",
+    "ISC",
+    "NPY",
+    "PD",
+    "PGH",
+    "PIE",
+    "PL",
+    "PT",
+    "PTH",
+    "PYI",
+    "RET",
+    "RSE",
+    "RUF",
+    "SIM",
+    "SLF",
+    "TCH",
+    "TID",
+    "TRY",
+    "UP",
+    "YTT",
+]
+unfixable = []
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+quote-style = "double"
+line-ending = "auto"
+docstring-code-format = true
+docstring-code-line-length = 80
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"  # google, numpy
+ignore-decorators = ["typing.overload"]
+
+[tool.ruff.lint.pyupgrade]
+# Preserve types, even if a file imports `from __future__ import annotations`.
+keep-runtime-typing = true
+
+[tool.mypy]
+exclude = ".venv|venv|cache|.mypy_cache|.ruff_cache"
+ignore_missing_imports = true
+follow_imports = "silent"
+python_version = "3.11"
+disallow_any_generics = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+implicit_reexport = false
+strict_equality = true
+strict = true
+show_error_context = true
+show_error_codes = true
+pretty = true
+show_traceback = true
+raise_exceptions = true
+
+[tool.bandit]
+skips = ["B101", "B601"]
