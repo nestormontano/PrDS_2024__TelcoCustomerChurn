@@ -61,7 +61,7 @@ python = ">=3.11,<3.13"
 isort = "^5.13.2"
 black = {extras = ["jupyter"], version = "^24.10.0"}
 ruff = "^0.6.9"
-mypy = "^1.11.2"
+mypy = "^1.14.1"
 pre-commit = "^4.0.1"
 numpy = "^1.26.4"
 pandas = "^2.2.3"
